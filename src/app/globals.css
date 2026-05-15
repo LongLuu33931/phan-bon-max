@@ -31,6 +31,195 @@ select {
   padding-inline: 1rem;
 }
 
+.markdown-content {
+  color: #3f3f37;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.markdown-content p,
+.markdown-content li {
+  white-space: pre-wrap;
+}
+
+.markdown-content > * + * {
+  margin-top: 1rem;
+}
+
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  color: #1c1917;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.markdown-content h2 {
+  margin-top: 2rem;
+  font-size: 1.75rem;
+}
+
+.markdown-content h3 {
+  margin-top: 1.5rem;
+  font-size: 1.35rem;
+}
+
+.markdown-content a {
+  color: #047857;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.markdown-content strong {
+  color: #1c1917;
+  font-weight: 900;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5rem;
+}
+
+.markdown-content ul {
+  list-style: disc;
+}
+
+.markdown-content ol {
+  list-style: decimal;
+}
+
+.markdown-content li + li {
+  margin-top: 0.35rem;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #047857;
+  background: #f0fdf4;
+  padding: 0.9rem 1rem;
+  color: #14532d;
+  font-weight: 700;
+}
+
+.markdown-content img {
+  width: 100%;
+  max-height: 34rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e7e5e4;
+  object-fit: cover;
+}
+
+.markdown-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e7e5e4;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  background: #f5f5f4;
+  color: #1c1917;
+  font-weight: 900;
+}
+
+.markdown-content code {
+  border-radius: 0.35rem;
+  background: #f5f5f4;
+  padding: 0.15rem 0.35rem;
+  color: #1c1917;
+  font-size: 0.92em;
+}
+
+.contact-wiggle {
+  animation: contact-wiggle 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.contact-shake {
+  animation: contact-shake 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.contact-bounce {
+  animation: contact-bounce 2.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes contact-wiggle {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg);
+  }
+  76% {
+    transform: rotate(-9deg);
+  }
+  80% {
+    transform: rotate(8deg);
+  }
+  84% {
+    transform: rotate(-5deg);
+  }
+  88% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes contact-shake {
+  0%,
+  68%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  72% {
+    transform: translateX(-1px) rotate(-10deg);
+  }
+  76% {
+    transform: translateX(2px) rotate(9deg);
+  }
+  80% {
+    transform: translateX(-2px) rotate(-7deg);
+  }
+  84% {
+    transform: translateX(1px) rotate(5deg);
+  }
+  88% {
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes contact-bounce {
+  0%,
+  62%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    transform: translateY(-3px) scale(1.04);
+  }
+  78% {
+    transform: translateY(1px) scale(0.98);
+  }
+  86% {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-wiggle,
+  .contact-shake,
+  .contact-bounce {
+    animation: none;
+  }
+}
+
 @media (min-width: 640px) {
   .section {
     padding-inline: 1.5rem;

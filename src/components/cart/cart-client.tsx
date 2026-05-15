@@ -1,12 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Leaf, Minus, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import type { CartItem } from "@/lib/types";
 
 const CART_KEY = "max8000-cart";
+const CART_UPDATED_EVENT = "max8000-cart-updated";
 
 export function CartClient() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -21,6 +23,7 @@ export function CartClient() {
   function persist(next: CartItem[]) {
     setItems(next);
     localStorage.setItem(CART_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
   }
 
   const total = useMemo(
@@ -44,14 +47,34 @@ export function CartClient() {
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="rounded-lg border border-stone-200 bg-white">
         {items.map((item) => (
-          <div key={item.productId} className="grid gap-4 border-b border-stone-100 p-4 sm:grid-cols-[1fr_auto]">
-            <div>
+          <div key={item.productId} className="grid gap-4 border-b border-stone-100 p-4 sm:grid-cols-[96px_1fr_auto]">
+            <Link
+              href={`/products/${item.slug}`}
+              aria-label={item.name}
+              className="relative h-24 w-24 overflow-hidden rounded-md border border-stone-100 bg-stone-50"
+            >
+              {item.thumbnailUrl ? (
+                <Image
+                  src={item.thumbnailUrl}
+                  alt={item.name}
+                  fill
+                  sizes="96px"
+                  className="object-contain p-2"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-emerald-700">
+                  <Leaf size={28} />
+                </span>
+              )}
+            </Link>
+            <div className="min-w-0">
               <Link href={`/products/${item.slug}`} className="font-semibold text-stone-950 hover:text-emerald-800">
                 {item.name}
               </Link>
               <p className="mt-1 text-sm text-stone-600">{formatCurrency(item.price)}</p>
+              <p className="mt-2 text-sm font-bold text-amber-700">{formatCurrency(item.price * item.quantity)}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:self-center">
               <button
                 type="button"
                 className="flex h-9 w-9 items-center justify-center rounded-md border border-stone-200"

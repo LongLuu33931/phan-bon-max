@@ -71,6 +71,57 @@ export type SiteSettings = {
   email: string;
   address: string;
   brandName: string;
+  tagline: string;
+  logoUrl: string;
+};
+
+export type OrderItem = {
+  id: string;
+  productId?: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  lineTotal: number;
+};
+
+export type Order = {
+  id: string;
+  orderCode: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  province: string;
+  note?: string;
+  status: "new" | "confirmed" | "shipping" | "completed" | "cancelled";
+  totalAmount: number;
+  createdAt: string;
+  items: OrderItem[];
+};
+
+export type ContactMessage = {
+  id: string;
+  customerName: string;
+  phone: string;
+  email?: string;
+  province?: string;
+  crop?: string;
+  message: string;
+  status: "new" | "contacted" | "closed";
+  createdAt: string;
+};
+
+export type Testimonial = {
+  id: string;
+  customerName: string;
+  role: string;
+  province: string;
+  crop: string;
+  quote: string;
+  rating: number;
+  avatarUrl?: string;
+  isFeatured: boolean;
+  isActive: boolean;
+  sortOrder: number;
 };
 
 export type CartItem = {

@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 import type { CartItem } from "@/lib/types";
 
 const CART_KEY = "max8000-cart";
+const CART_UPDATED_EVENT = "max8000-cart-updated";
 
 export function CheckoutClient() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -37,6 +38,7 @@ export function CheckoutClient() {
         setOrderCode(result.orderCode ?? "");
         localStorage.removeItem(CART_KEY);
         setItems([]);
+        window.dispatchEvent(new Event(CART_UPDATED_EVENT));
       }
     });
   }

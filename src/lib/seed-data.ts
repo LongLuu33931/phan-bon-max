@@ -1,7 +1,9 @@
-import type { Category, Post, Product, SiteSettings } from "./types";
+import type { Category, Post, Product, SiteSettings, Testimonial } from "./types";
 
 export const siteSettings: SiteSettings = {
   brandName: "MAX 8000",
+  tagline: "Dinh dưỡng cây trồng",
+  logoUrl: "https://phanbonmax8000.com/wp-content/uploads/2026/05/LOGO.png",
   hotline: "0396 726 429",
   zaloUrl: "https://zalo.me/0396726429",
   email: "admin@phanbonmax8000.com",
@@ -391,6 +393,100 @@ export const products: Product[] = [
     seoDescription: "Cal Max 8000 giàu Canxi và Bo, giúp cứng cuống, chống rụng hoa, nứt trái và méo trái.",
   },
 ];
+
+const productMedia: Record<string, string[]> = {
+  "rootmax-npk8000": [
+    "/product-images/rootmax-npk8000/rootmax.jpg",
+    "/product-images/rootmax-npk8000/16640ca628dca982f0cd.jpg",
+  ],
+  "soil-max-8000": [
+    "/product-images/soil-max-8000/soil-max.jpg",
+    "/product-images/soil-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-15-02-01.png",
+  ],
+  "recover-max-8000": [
+    "/product-images/recover-max-8000/RECOVER-MAX-8000.jpg",
+    "/product-images/recover-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-15-19-35.png",
+  ],
+  "grow-max-8000": [
+    "/product-images/grow-max-8000/GROW-MAX-8000.jpg",
+    "/product-images/grow-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-16-40-36.png",
+  ],
+  "shoot-max-8000": [
+    "/product-images/shoot-max-8000/z7662479580439-bba693d61637eaa2cb402b525a5ad6ff.jpg",
+  ],
+  "leaf-max-8000": [
+    "/product-images/leaf-max-8000/LEAF-MAX-8000.jpg",
+    "/product-images/leaf-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-16-15-04.png",
+  ],
+  "fruit-max-npk-8000": [
+    "/product-images/fruit-max-npk-8000/FRUIT-MAX-8000.jpg",
+    "/product-images/fruit-max-npk-8000/Anh-chup-Man-hinh-2026-05-06-luc-17-31-11.png",
+  ],
+  "stem-max-8000": [
+    "/product-images/stem-max-npk-8000/STEM-MAX-8000.jpg",
+    "/product-images/stem-max-npk-8000/Anh-chup-Man-hinh-2026-05-06-luc-17-21-06.png",
+  ],
+  "flower-max-8000": [
+    "/product-images/flower-max-8000/FLOWER-MAX-8000.jpg",
+    "/product-images/flower-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-16-55-54.png",
+  ],
+  "cal-max-8000": [
+    "/product-images/cal-max-8000/CAL-MAX-8000.jpg",
+    "/product-images/cal-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-17-06-23.png",
+  ],
+};
+
+export const testimonials: Testimonial[] = [
+  {
+    id: "testi-1",
+    customerName: "Anh Minh",
+    role: "Nhà vườn sầu riêng",
+    province: "Đắk Lắk",
+    crop: "Sầu riêng",
+    quote: "Sau giai đoạn cây suy, tôi dùng nhóm phục hồi rễ trước rồi mới chuyển sang nuôi trái. Cây lên đọt đều hơn, dễ theo dõi sức cây.",
+    rating: 5,
+    avatarUrl: "/product-images/fruit-max-npk-8000/Anh-chup-Man-hinh-2026-05-06-luc-17-31-11.png",
+    isFeatured: true,
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    id: "testi-2",
+    customerName: "Chị Hạnh",
+    role: "Đại lý vật tư nông nghiệp",
+    province: "Lâm Đồng",
+    crop: "Rau màu",
+    quote: "Bộ sản phẩm chia theo vấn đề rất dễ tư vấn. Khách hỏi vàng lá, rễ yếu hay nuôi trái đều có nhóm sản phẩm rõ ràng để giới thiệu.",
+    rating: 5,
+    avatarUrl: "/product-images/rootmax-npk8000/16640ca628dca982f0cd.jpg",
+    isFeatured: true,
+    isActive: true,
+    sortOrder: 2,
+  },
+  {
+    id: "testi-3",
+    customerName: "Anh Tâm",
+    role: "Nhà vườn cây ăn trái",
+    province: "Tiền Giang",
+    crop: "Cây ăn trái",
+    quote: "Tôi thích phần hướng dẫn liều dùng và giai đoạn sử dụng rõ. Dễ phối hợp theo lịch chăm sóc vườn mà không bị rối sản phẩm.",
+    rating: 4,
+    avatarUrl: "/product-images/cal-max-8000/Anh-chup-Man-hinh-2026-05-06-luc-17-06-23.png",
+    isFeatured: true,
+    isActive: true,
+    sortOrder: 3,
+  },
+];
+
+for (const product of products) {
+  const media = productMedia[product.slug] ?? [];
+  product.thumbnailUrl = media[0];
+  product.images = media.map((url, index) => ({
+    url,
+    alt: product.name,
+    isPrimary: index === 0,
+  }));
+}
 
 export const posts: Post[] = [
   {

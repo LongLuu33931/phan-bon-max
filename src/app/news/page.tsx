@@ -12,7 +12,7 @@ export default async function NewsPage() {
     <PublicLayout>
       <section className="section py-10">
         <h1 className="text-3xl font-black text-stone-950">Tin tức nông nghiệp</h1>
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
           {posts.map((post) => (
             <Link key={post.id} href={`/news/${post.slug}`} className="rounded-lg border border-stone-200 bg-white p-6">
               <p className="text-sm font-semibold text-emerald-800">{post.publishedAt}</p>

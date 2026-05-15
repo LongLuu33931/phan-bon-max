@@ -41,20 +41,22 @@ export default async function ProductDetailPage({ params }: Props) {
           <Link href="/">Trang chủ</Link> / <Link href="/products">Sản phẩm</Link> / {category?.name}
         </div>
         <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
-            <ProductThumb product={product} priority />
-          </div>
-          {product.images.length ? (
-            <div className="grid grid-cols-3 gap-3 lg:col-start-1">
-              {product.images.slice(0, 6).map((image) => (
-                <div key={image.url} className="aspect-square overflow-hidden rounded-md border border-stone-200 bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
-                </div>
-              ))}
+          <div className="min-w-0">
+            <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+              <ProductThumb product={product} priority />
             </div>
-          ) : null}
-          <div>
+            {product.images.length ? (
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {product.images.slice(0, 6).map((image) => (
+                  <div key={image.url} className="aspect-square overflow-hidden rounded-md border border-stone-200 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="min-w-0 lg:pt-10">
             <p className="font-semibold text-emerald-800">{category?.name}</p>
             <h1 className="mt-2 text-3xl font-black leading-tight text-stone-950 lg:text-4xl">{product.name}</h1>
             <p className="mt-4 text-2xl font-black text-amber-700">{formatCurrency(product.price)}</p>
@@ -92,7 +94,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <p className="mt-3 leading-8 text-stone-700">{product.description}</p>
 
             <h2 className="mt-10 text-2xl font-black text-stone-950">Công dụng nổi bật</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               {product.benefits.map((benefit) => (
                 <div key={benefit.title} className="rounded-lg border border-stone-200 bg-stone-50 p-5">
                   <h3 className="font-bold text-emerald-900">{benefit.title}</h3>
@@ -137,7 +139,7 @@ export default async function ProductDetailPage({ params }: Props) {
       {related.length ? (
         <section className="section py-12">
           <h2 className="text-2xl font-black text-stone-950">Sản phẩm tương tự</h2>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
               <ProductCard key={item.id} product={item} category={categories.find((categoryItem) => categoryItem.id === item.categoryId)} />
             ))}
