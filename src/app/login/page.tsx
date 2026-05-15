@@ -12,7 +12,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ next?: string | string[] }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { next } = await searchParams;
+  const nextPath = Array.isArray(next) ? next[0] : next;
+
   if (supabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     const {
@@ -22,5 +29,5 @@ export default async function LoginPage() {
     if (user) redirect("/admin");
   }
 
-  return <LoginPageCard />;
+  return <LoginPageCard nextPath={nextPath} />;
 }

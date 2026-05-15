@@ -1,13 +1,15 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import toast from "react-hot-toast";
 import { supabaseConfigured } from "@/lib/supabase";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
-export function LoginForm() {
-  const searchParams = useSearchParams();
+type LoginFormProps = {
+  nextPath?: string;
+};
+
+export function LoginForm({ nextPath }: LoginFormProps) {
   const [isPending, startTransition] = useTransition();
 
   function login(formData: FormData) {
@@ -29,8 +31,7 @@ export function LoginForm() {
       }
 
       toast.success("Đăng nhập thành công.");
-      const next = searchParams.get("next");
-      window.location.href = next?.startsWith("/admin") ? next : "/admin";
+      window.location.href = nextPath?.startsWith("/admin") ? nextPath : "/admin";
     });
   }
 
