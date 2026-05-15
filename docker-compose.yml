@@ -1,0 +1,17 @@
+services:
+  phan-bon-max:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phan-bon-max:latest
+    container_name: phan-bon-max
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "5762"
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "5762:5762"
+    restart: unless-stopped
