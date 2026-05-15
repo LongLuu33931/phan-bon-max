@@ -73,6 +73,19 @@ export type SiteSettings = {
   brandName: string;
   tagline: string;
   logoUrl: string;
+  heroSlides: HeroSlide[];
+};
+
+export type HeroSlide = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  isActive: boolean;
 };
 
 export type OrderItem = {

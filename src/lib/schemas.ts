@@ -84,4 +84,5 @@ export const siteSettingsSchema = z.object({
   zaloUrl: z.string().trim().min(5, "Vui lòng nhập Zalo URL"),
   email: z.string().trim().email("Email chưa hợp lệ"),
   address: z.string().trim().min(5, "Vui lòng nhập địa chỉ"),
+  heroSlidesJson: z.string().trim().default("[]"),
 });

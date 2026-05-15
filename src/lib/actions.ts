@@ -10,6 +10,7 @@ import { createSupabaseAdminClient } from "./supabase-admin";
 import { createSupabaseServerClient } from "./supabase-server";
 import { products } from "./seed-data";
 import { getPostgresPool, postgresConfigured } from "./postgres";
+import type { HeroSlide } from "./types";
 
 export type ActionState = {
   ok: boolean;
@@ -34,6 +35,7 @@ const contactStatusSchema = z.object({
 });
 
 const POST_IMAGE_BUCKET = "post-images";
+const SITE_ASSETS_BUCKET = "site-assets";
 
 async function requireAdmin() {
   if (!supabaseConfigured) return true;
@@ -68,6 +70,36 @@ async function ensurePostImagesBucket() {
   if (!adminSupabase) return;
 
   await adminSupabase.storage.createBucket(POST_IMAGE_BUCKET, { public: true });
+}
+
+async function ensureSiteAssetsBucket() {
+  const adminSupabase = createSupabaseAdminClient();
+  if (!adminSupabase) return;
+
+  await adminSupabase.storage.createBucket(SITE_ASSETS_BUCKET, { public: true });
+}
+
+async function uploadSiteAssetFile(file: File, folder: string) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Vui lòng chọn file hình ảnh.");
+  }
+
+  if (!supabaseConfigured) {
+    throw new Error("Chưa cấu hình Supabase để upload hình ảnh.");
+  }
+
+  await ensureSiteAssetsBucket();
+  const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${folder}/${Date.now()}-${getSafeFileName(file.name || `image.${ext}`)}`;
+  const { error } = await supabase!.storage
+    .from(SITE_ASSETS_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type || undefined });
+
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase!.storage.from(SITE_ASSETS_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 }
 
 async function uploadPostImageFile(file: File, folder: string) {
@@ -593,37 +625,66 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
   }
 
   const logo = formData.get("logo");
-  let logoUrl = parsed.data.logoUrl || "";
+  const { heroSlidesJson, ...settingsData } = parsed.data;
+  let logoUrl = settingsData.logoUrl || "";
+  let heroSlides: HeroSlide[];
+
+  try {
+    heroSlides = JSON.parse(heroSlidesJson) as HeroSlide[];
+    if (!Array.isArray(heroSlides)) throw new Error("Invalid hero slides");
+  } catch {
+    return { ok: false, message: "Dữ liệu hero slider chưa đúng định dạng." };
+  }
+
+  heroSlides = heroSlides
+    .map((slide) => ({
+      eyebrow: String(slide.eyebrow ?? "").trim(),
+      title: String(slide.title ?? "").trim(),
+      description: String(slide.description ?? "").trim(),
+      imageUrl: String(slide.imageUrl ?? "").trim(),
+      primaryLabel: String(slide.primaryLabel ?? "").trim(),
+      primaryHref: String(slide.primaryHref ?? "").trim(),
+      secondaryLabel: String(slide.secondaryLabel ?? "").trim(),
+      secondaryHref: String(slide.secondaryHref ?? "").trim(),
+      isActive: Boolean(slide.isActive),
+    }))
+    .filter((slide) => slide.title || slide.imageUrl);
 
   if (supabaseConfigured) {
     const adminSupabase = createSupabaseAdminClient();
     const supabase = adminSupabase ?? await createSupabaseServerClient();
 
     if (logo instanceof File && logo.size > 0) {
-      if (adminSupabase) {
-        await adminSupabase.storage.createBucket("site-assets", { public: true });
+      try {
+        const oldLogoPath = logoUrl ? getStoragePublicPath(logoUrl, SITE_ASSETS_BUCKET) : null;
+        logoUrl = await uploadSiteAssetFile(logo, "branding");
+        if (oldLogoPath) await supabase!.storage.from(SITE_ASSETS_BUCKET).remove([oldLogoPath]);
+      } catch (error) {
+        return { ok: false, message: error instanceof Error ? error.message : "Không upload được logo." };
       }
-
-      const ext = logo.name.split(".").pop() || "png";
-      const path = `branding/logo-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase!.storage
-        .from("site-assets")
-        .upload(path, logo, { upsert: true, contentType: logo.type || undefined });
-
-      if (uploadError) return { ok: false, message: uploadError.message };
-      const { data } = supabase!.storage.from("site-assets").getPublicUrl(path);
-      const oldLogoPath = logoUrl ? getStoragePublicPath(logoUrl, "site-assets") : null;
-      logoUrl = data.publicUrl;
-      if (oldLogoPath) await supabase!.storage.from("site-assets").remove([oldLogoPath]);
     }
 
     if (!logoUrl) return { ok: false, message: "Vui lòng upload logo website." };
+
+    try {
+      for (let index = 0; index < heroSlides.length; index++) {
+        const image = formData.get(`heroImage-${index}`);
+        if (image instanceof File && image.size > 0) {
+          heroSlides[index] = {
+            ...heroSlides[index],
+            imageUrl: await uploadSiteAssetFile(image, "hero-slides"),
+          };
+        }
+      }
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Không upload được ảnh hero." };
+    }
 
     const { error } = await supabase!
       .from("site_settings")
       .upsert({
         key: "site",
-        value: { ...parsed.data, logoUrl },
+        value: { ...settingsData, logoUrl, heroSlides },
         updated_at: new Date().toISOString(),
       });
     if (error) return { ok: false, message: error.message };
@@ -633,7 +694,7 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
       `insert into public.site_settings (key, value, updated_at)
        values ('site', $1::jsonb, now())
        on conflict (key) do update set value=excluded.value, updated_at=now()`,
-      [JSON.stringify({ ...parsed.data, logoUrl })],
+      [JSON.stringify({ ...settingsData, logoUrl, heroSlides })],
     );
   }
 

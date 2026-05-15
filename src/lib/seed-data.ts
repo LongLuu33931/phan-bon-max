@@ -8,6 +8,20 @@ export const siteSettings: SiteSettings = {
   zaloUrl: "https://zalo.me/0396726429",
   email: "admin@phanbonmax8000.com",
   address: "Nhà Máy Sản Xuất, Phường Trường Thi, Tỉnh Ninh Bình",
+  heroSlides: [
+    {
+      eyebrow: "Dinh dưỡng theo từng giai đoạn",
+      title: "MAX 8000 cho vườn khỏe, trái đẹp, năng suất bền",
+      description:
+        "Bộ sản phẩm phân bón theo từng nhu cầu: cải tạo đất, kích rễ, bung đọt, ra hoa, đậu trái và nuôi trái nặng ký.",
+      imageUrl: "",
+      primaryLabel: "Xem sản phẩm",
+      primaryHref: "/products",
+      secondaryLabel: "Tư vấn qua Zalo",
+      secondaryHref: "https://zalo.me/0396726429",
+      isActive: true,
+    },
+  ],
 };
 
 export const categories: Category[] = [
