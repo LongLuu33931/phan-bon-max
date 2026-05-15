@@ -1,6 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function clearSupabaseAuthCookies(request: NextRequest, response: NextResponse) {
+  request.cookies
+    .getAll()
+    .filter((cookie) => cookie.name.startsWith("sb-"))
+    .forEach((cookie) => response.cookies.delete(cookie.name));
+}
+
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   let response = NextResponse.next({
@@ -31,7 +38,22 @@ export async function proxy(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (error) {
+    clearSupabaseAuthCookies(request, response);
+
+    if (url.pathname.startsWith("/admin")) {
+      url.pathname = "/login";
+      url.searchParams.set("next", request.nextUrl.pathname);
+      const redirectResponse = NextResponse.redirect(url);
+      clearSupabaseAuthCookies(request, redirectResponse);
+      return redirectResponse;
+    }
+
+    return response;
+  }
 
   if (url.pathname.startsWith("/admin") && !user) {
     url.pathname = "/login";

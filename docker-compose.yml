@@ -1,17 +1,21 @@
 services:
-  phan-bon-max:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: phan-bon-max:latest
-    container_name: phan-bon-max
+  app:
+    image: ghcr.io/longluu33931/phan-bon-max:latest
+    container_name: PHAN_BON_MAX
+    restart: always
     env_file:
       - .env
-    environment:
-      NODE_ENV: production
-      NEXT_TELEMETRY_DISABLED: "1"
-      PORT: "5762"
-      HOSTNAME: 0.0.0.0
     ports:
       - "5762:5762"
-    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config.json:/config.json
+    environment:
+      - DOCKER_CONFIG=/
+    command: --interval 20 --cleanup --remove-volumes
+    restart: always

@@ -25,11 +25,11 @@ export async function AdminShell({ children }: { children: ReactNode }) {
   if (supabaseConfigured) {
     const supabase = await createSupabaseServerClient();
     const {
-      data: { user },
-    } = await supabase!.auth.getUser();
+      data: { session },
+    } = await supabase!.auth.getSession();
 
-    if (!user) redirect("/login");
-    adminEmail = user.email ?? "admin";
+    if (!session?.user) redirect("/login");
+    adminEmail = session.user.email ?? "admin";
   }
 
   const [settings, counts] = await Promise.all([getSettings(), getAdminNotificationCounts()]);

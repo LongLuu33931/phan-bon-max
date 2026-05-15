@@ -10,14 +10,29 @@ import type { CartItem } from "@/lib/types";
 const CART_KEY = "max8000-cart";
 const CART_UPDATED_EVENT = "max8000-cart-updated";
 
+function getCartItems() {
+  try {
+    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+  } catch {
+    return [];
+  }
+}
+
 export function CartClient() {
   const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const id = window.requestAnimationFrame(() => {
-      setItems(JSON.parse(localStorage.getItem(CART_KEY) ?? "[]"));
-    });
-    return () => window.cancelAnimationFrame(id);
+    const updateItems = () => setItems(getCartItems());
+    const id = window.requestAnimationFrame(updateItems);
+
+    window.addEventListener(CART_UPDATED_EVENT, updateItems);
+    window.addEventListener("storage", updateItems);
+
+    return () => {
+      window.cancelAnimationFrame(id);
+      window.removeEventListener(CART_UPDATED_EVENT, updateItems);
+      window.removeEventListener("storage", updateItems);
+    };
   }, []);
 
   function persist(next: CartItem[]) {

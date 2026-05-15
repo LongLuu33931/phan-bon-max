@@ -3,6 +3,7 @@ import { HeroSlider } from "@/components/home/hero-slider";
 import { HomeContactSection } from "@/components/home/home-contact-section";
 import { HomeFeatureStrip } from "@/components/home/home-feature-strip";
 import { HomeNewsSection } from "@/components/home/home-news-section";
+import { HomeWhyChooseSection } from "@/components/home/home-why-choose-section";
 import { TestimonialStack } from "@/components/testimonial/testimonial-stack";
 import { getCategories, getPosts, getProducts, getSettings, getTestimonials } from "@/lib/data";
 import { PublicLayout } from "./(public-layout)";
@@ -25,6 +26,7 @@ export default async function Home() {
         fallbackProduct={heroProduct}
       />
       <HomeFeatureStrip />
+      <HomeWhyChooseSection />
       <FeaturedProductsSection categories={categories} products={featured} />
       <TestimonialStack testimonials={testimonials} />
       <HomeNewsSection posts={posts} />

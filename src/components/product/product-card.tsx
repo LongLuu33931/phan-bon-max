@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
+import { ProductCardAddToCart } from "./product-card-add-to-cart";
 import { ProductThumb } from "./product-thumb";
 
 export function ProductCard({
@@ -33,13 +33,7 @@ export function ProductCard({
         <p className="mt-2 line-clamp-2 break-words text-sm leading-6 text-stone-600">{product.shortDescription}</p>
         <div className="mt-4 flex items-center justify-between gap-3">
           <p className="font-bold text-amber-700">{formatCurrency(product.price)}</p>
-          <Link
-            href={`/products/${product.slug}`}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-800 text-white"
-            aria-label={`Xem ${product.name}`}
-          >
-            <ShoppingBag size={18} />
-          </Link>
+          <ProductCardAddToCart product={product} />
         </div>
       </div>
     </article>
