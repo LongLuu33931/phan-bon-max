@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Eye, X } from "lucide-react";
 import { OrderCustomerInfoForm } from "@/components/admin/order-customer-info-form";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import type { Order } from "@/lib/types";
 
 const statusLabels: Record<Order["status"], string> = {
@@ -63,7 +63,7 @@ export function OrderDetailDialog({ order }: { order: Order }) {
                     {order.orderCode}
                   </h2>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold text-stone-500">
-                    <span>{new Date(order.createdAt).toLocaleString("vi-VN")}</span>
+                    <span>{formatDate(order.createdAt)}</span>
                     <span>{itemCount} sản phẩm</span>
                   </div>
                 </div>

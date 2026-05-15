@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { updateContactMessageStatus, type ActionState } from "@/lib/actions";
 import type { ContactMessage } from "@/lib/types";
 
@@ -29,6 +30,7 @@ function SubmitButton() {
 
 export function ContactStatusForm({ messageId, status }: { messageId: string; status: ContactMessage["status"] }) {
   const [state, formAction] = useActionState(updateContactMessageStatus, initialState);
+  useActionToast(state);
 
   return (
     <form action={formAction} className="grid gap-3">
@@ -47,9 +49,6 @@ export function ContactStatusForm({ messageId, status }: { messageId: string; st
         </select>
         <SubmitButton />
       </div>
-      {state.message ? (
-        <p className={`text-xs font-semibold ${state.ok ? "text-emerald-700" : "text-red-600"}`}>{state.message}</p>
-      ) : null}
     </form>
   );
 }

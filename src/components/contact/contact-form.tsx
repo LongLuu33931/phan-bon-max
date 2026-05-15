@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Send } from "lucide-react";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { saveContactMessage, type ActionState } from "@/lib/actions";
 
 const initialState: ActionState = { ok: false, message: "" };
@@ -11,6 +12,7 @@ const labelClass = "grid gap-2 text-sm font-bold text-stone-700";
 
 export function ContactForm() {
   const [state, action, isPending] = useActionState(saveContactMessage, initialState);
+  useActionToast(state);
 
   return (
     <form action={action} className="grid gap-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
@@ -21,19 +23,19 @@ export function ContactForm() {
       <div className="grid gap-4 md:grid-cols-2">
         <label className={labelClass}>
           Họ tên
-          <input name="customerName" required className={inputClass} />
+          <input name="customerName" required placeholder="Ví dụ: Nguyễn Văn An" className={inputClass} />
         </label>
         <label className={labelClass}>
           Số điện thoại
-          <input name="phone" required inputMode="tel" className={inputClass} />
+          <input name="phone" required inputMode="tel" placeholder="Ví dụ: 0396 726 429" className={inputClass} />
         </label>
         <label className={labelClass}>
           Email
-          <input name="email" type="email" className={inputClass} />
+          <input name="email" type="email" placeholder="Ví dụ: anhvuon@email.com" className={inputClass} />
         </label>
         <label className={labelClass}>
           Tỉnh/thành
-          <input name="province" className={inputClass} />
+          <input name="province" placeholder="Ví dụ: Lâm Đồng" className={inputClass} />
         </label>
         <label className={`${labelClass} md:col-span-2`}>
           Loại cây/vườn đang chăm
@@ -41,18 +43,20 @@ export function ContactForm() {
         </label>
         <label className={`${labelClass} md:col-span-2`}>
           Nội dung cần tư vấn
-          <textarea name="message" rows={5} required className={textareaClass} />
+          <textarea
+            name="message"
+            rows={5}
+            required
+            minLength={10}
+            placeholder="Nhập ít nhất 10 ký tự. Ví dụ: Vườn sầu riêng 3 năm, cây đang ra đọt yếu, cần tư vấn dòng phù hợp."
+            className={textareaClass}
+          />
         </label>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 justify-end">
         <button disabled={isPending} className="inline-flex h-12 items-center gap-2 rounded-xl bg-emerald-900 px-5 text-sm font-black text-white transition hover:bg-emerald-800 disabled:bg-stone-300">
           <Send size={17} /> {isPending ? "Đang gửi..." : "Gửi liên hệ"}
         </button>
-        {state.message ? (
-          <p className={state.ok ? "text-sm font-bold text-emerald-700" : "text-sm font-bold text-amber-700"}>
-            {state.message}
-          </p>
-        ) : null}
       </div>
     </form>
   );

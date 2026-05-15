@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { Resend } from "resend";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { contactMessageSchema, checkoutSchema, postSchema, productSchema, siteSettingsSchema, testimonialSchema } from "./schemas";
+import { categorySchema, contactMessageSchema, checkoutSchema, postSchema, productSchema, siteSettingsSchema, testimonialSchema } from "./schemas";
 import { supabaseConfigured } from "./supabase";
 import { createSupabaseAdminClient } from "./supabase-admin";
 import { createSupabaseServerClient } from "./supabase-server";
@@ -36,6 +36,7 @@ const contactStatusSchema = z.object({
 
 const POST_IMAGE_BUCKET = "post-images";
 const SITE_ASSETS_BUCKET = "site-assets";
+const VIETNAM_TIMEZONE_OFFSET_MINUTES = 7 * 60;
 
 async function requireAdmin() {
   if (!supabaseConfigured) return true;
@@ -48,10 +49,13 @@ async function requireAdmin() {
   return Boolean(user);
 }
 
-function getSafeFileName(fileName: string) {
-  const ext = fileName.split(".").pop() || "jpg";
-  const baseName = fileName.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  return `${baseName || "image"}.${ext}`;
+function getFileExtension(fileName: string) {
+  const ext = fileName.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return ext || "jpg";
+}
+
+function getRandomStorageFileName(file: File, prefix = "image") {
+  return `${prefix}-${randomUUID()}.${getFileExtension(file.name)}`;
 }
 
 function getSafeFolderName(value: string) {
@@ -63,6 +67,31 @@ function getSafeFolderName(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "") || "post";
+}
+
+function vietnamDateTimeLocalToIso(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+    const date = new Date(trimmed);
+    return Number.isNaN(date.getTime()) ? trimmed : date.toISOString();
+  }
+
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return trimmed;
+
+  const [, year, month, day, hour, minute, second = "0"] = match;
+  const utcTime = Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+  ) - VIETNAM_TIMEZONE_OFFSET_MINUTES * 60 * 1000;
+
+  return new Date(utcTime).toISOString();
 }
 
 async function ensurePostImagesBucket() {
@@ -90,11 +119,10 @@ async function uploadSiteAssetFile(file: File, folder: string) {
 
   await ensureSiteAssetsBucket();
   const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${folder}/${Date.now()}-${getSafeFileName(file.name || `image.${ext}`)}`;
+  const path = `${folder}/${getRandomStorageFileName(file, "asset")}`;
   const { error } = await supabase!.storage
     .from(SITE_ASSETS_BUCKET)
-    .upload(path, file, { upsert: false, contentType: file.type || undefined });
+    .upload(path, file, { upsert: false, contentType: file.type || undefined, cacheControl: "31536000" });
 
   if (error) throw new Error(error.message);
 
@@ -114,7 +142,7 @@ async function uploadPostImageFile(file: File, folder: string) {
   await ensurePostImagesBucket();
   const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
   const safeFolder = getSafeFolderName(folder);
-  const path = `${safeFolder}/${Date.now()}-${getSafeFileName(file.name)}`;
+  const path = `${safeFolder}/${getRandomStorageFileName(file, "post")}`;
   const { error } = await supabase!.storage
     .from(POST_IMAGE_BUCKET)
     .upload(path, file, { upsert: false, contentType: file.type || undefined });
@@ -417,7 +445,15 @@ function getStoragePublicPath(publicUrl: string, bucket: string) {
   return decodeURIComponent(publicUrl.slice(index + marker.length));
 }
 
+function isUuid(value?: string) {
+  return Boolean(value?.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i));
+}
+
 export async function saveTestimonial(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để lưu feedback." };
+  }
+
   const parsed = testimonialSchema.safeParse({
     ...Object.fromEntries(formData.entries()),
     isFeatured: formData.has("isFeatured"),
@@ -434,6 +470,16 @@ export async function saveTestimonial(_: ActionState, formData: FormData): Promi
     };
   }
 
+  let avatarUrl = parsed.data.avatarUrl || "";
+  const avatarImage = formData.get("avatarImage");
+  if (avatarImage instanceof File && avatarImage.size > 0) {
+    try {
+      avatarUrl = await uploadSiteAssetFile(avatarImage, "testimonials");
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Không upload được ảnh feedback." };
+    }
+  }
+
   const payload = {
     customer_name: parsed.data.customerName,
     role: parsed.data.role,
@@ -441,7 +487,7 @@ export async function saveTestimonial(_: ActionState, formData: FormData): Promi
     crop: parsed.data.crop,
     quote: parsed.data.quote,
     rating: parsed.data.rating,
-    avatar_url: parsed.data.avatarUrl || null,
+    avatar_url: avatarUrl || null,
     sort_order: parsed.data.sortOrder,
     is_featured: parsed.data.isFeatured,
     is_active: parsed.data.isActive,
@@ -449,10 +495,11 @@ export async function saveTestimonial(_: ActionState, formData: FormData): Promi
   };
 
   const id = formData.get("id")?.toString();
+  const databaseId = isUuid(id) ? id : undefined;
   if (supabaseConfigured) {
     const supabase = await createSupabaseServerClient();
-    const query = id
-      ? supabase!.from("testimonials").update(payload).eq("id", id)
+    const query = databaseId
+      ? supabase!.from("testimonials").update(payload).eq("id", databaseId)
       : supabase!.from("testimonials").insert(payload);
     const { error } = await query;
 
@@ -470,9 +517,9 @@ export async function saveTestimonial(_: ActionState, formData: FormData): Promi
       payload.sort_order,
       payload.is_featured,
       payload.is_active,
-      id,
+      databaseId,
     ];
-    if (id) {
+    if (databaseId) {
       await pool!.query(
         `update public.testimonials set
           customer_name=$1,role=$2,province=$3,crop=$4,quote=$5,rating=$6,avatar_url=$7,
@@ -512,9 +559,10 @@ export async function savePost(_: ActionState, formData: FormData): Promise<Acti
     };
   }
 
+  const requestedPublishedAt = vietnamDateTimeLocalToIso(parsed.data.publishedAt);
   const publishedAt = parsed.data.status === "published"
-    ? parsed.data.publishedAt || new Date().toISOString()
-    : parsed.data.publishedAt || null;
+    ? requestedPublishedAt || new Date().toISOString()
+    : requestedPublishedAt;
   const coverImage = formData.get("coverImage");
   let coverImageUrl = parsed.data.coverImageUrl || null;
 
@@ -611,6 +659,43 @@ export async function uploadPostImage(formData: FormData): Promise<ActionState &
   }
 }
 
+export async function togglePostPublished(id: string, isPublished: boolean): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để cập nhật bài viết." };
+  }
+
+  if (!supabaseConfigured && !postgresConfigured) {
+    return { ok: false, message: "Chưa cấu hình database để cập nhật bài viết." };
+  }
+
+  const status = isPublished ? "published" : "draft";
+  const publishedAt = isPublished ? new Date().toISOString() : null;
+
+  if (supabaseConfigured) {
+    const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+    const { error } = await supabase!
+      .from("posts")
+      .update({
+        status,
+        published_at: publishedAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) return { ok: false, message: error.message };
+  } else if (postgresConfigured) {
+    const pool = getPostgresPool();
+    await pool!.query(
+      "update public.posts set status = $1, published_at = $2, updated_at = now() where id = $3::uuid",
+      [status, publishedAt, id],
+    );
+  }
+
+  revalidatePath("/");
+  revalidatePath("/news");
+  revalidatePath("/admin/posts");
+  return { ok: true, message: isPublished ? "Đã hiển thị bài viết." : "Đã ẩn bài viết." };
+}
+
 export async function saveSiteSettings(_: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = siteSettingsSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -647,8 +732,7 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
       secondaryLabel: String(slide.secondaryLabel ?? "").trim(),
       secondaryHref: String(slide.secondaryHref ?? "").trim(),
       isActive: Boolean(slide.isActive),
-    }))
-    .filter((slide) => slide.title || slide.imageUrl);
+    }));
 
   if (supabaseConfigured) {
     const adminSupabase = createSupabaseAdminClient();
@@ -676,6 +760,7 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
           };
         }
       }
+      heroSlides = heroSlides.filter((slide) => slide.title || slide.imageUrl);
     } catch (error) {
       return { ok: false, message: error instanceof Error ? error.message : "Không upload được ảnh hero." };
     }
@@ -689,6 +774,8 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
       });
     if (error) return { ok: false, message: error.message };
   } else if (postgresConfigured) {
+    heroSlides = heroSlides.filter((slide) => slide.title || slide.imageUrl);
+
     const pool = getPostgresPool();
     await pool!.query(
       `insert into public.site_settings (key, value, updated_at)
@@ -704,6 +791,10 @@ export async function saveSiteSettings(_: ActionState, formData: FormData): Prom
 }
 
 export async function saveProduct(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để lưu sản phẩm." };
+  }
+
   const parsed = productSchema.safeParse({
     ...Object.fromEntries(formData.entries()),
     isFeatured: formData.has("isFeatured"),
@@ -720,22 +811,13 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
     };
   }
 
-  const supabase = supabaseConfigured ? await createSupabaseServerClient() : null;
-  const thumbnail = formData.get("thumbnail");
+  const supabase = supabaseConfigured ? createSupabaseAdminClient() ?? await createSupabaseServerClient() : null;
   const originalThumbnailUrl = formData.get("originalThumbnailUrl")?.toString() || undefined;
   let thumbnailUrl = formData.get("thumbnailUrl")?.toString() || undefined;
-
-  if (supabaseConfigured && thumbnail instanceof File && thumbnail.size > 0) {
-    const ext = thumbnail.name.split(".").pop() || "jpg";
-    const path = `${parsed.data.slug}/thumbnail-${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase!.storage
-      .from("product-images")
-      .upload(path, thumbnail, { upsert: true });
-
-    if (uploadError) return { ok: false, message: uploadError.message };
-    const { data } = supabase!.storage.from("product-images").getPublicUrl(path);
-    thumbnailUrl = data.publicUrl;
-  }
+  const newGalleryThumbnailIndexValue = formData.get("newGalleryThumbnailIndex")?.toString();
+  const newGalleryThumbnailIndex = newGalleryThumbnailIndexValue === undefined || newGalleryThumbnailIndexValue === ""
+    ? null
+    : Number(newGalleryThumbnailIndexValue);
 
   let specs;
   let benefits;
@@ -760,12 +842,10 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
       const replacement = formData.get(`galleryReplace-${index}`);
       if (!(replacement instanceof File) || replacement.size === 0) continue;
 
-      const ext = replacement.name.split(".").pop() || "jpg";
-      const safeName = replacement.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "-");
-      const path = `${parsed.data.slug}/gallery-${Date.now()}-${safeName}.${ext}`;
+      const path = `${parsed.data.slug}/${getRandomStorageFileName(replacement, "gallery")}`;
       const { error: uploadError } = await supabase!.storage
         .from("product-images")
-        .upload(path, replacement, { upsert: true });
+        .upload(path, replacement, { upsert: false, contentType: replacement.type || undefined });
 
       if (uploadError) return { ok: false, message: uploadError.message };
       const { data } = supabase!.storage.from("product-images").getPublicUrl(path);
@@ -776,20 +856,42 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
   const galleryFiles = formData
     .getAll("gallery")
     .filter((file): file is File => file instanceof File && file.size > 0);
+  const selectedNewGalleryIndex = typeof newGalleryThumbnailIndex === "number" &&
+    Number.isInteger(newGalleryThumbnailIndex) &&
+    newGalleryThumbnailIndex >= 0 &&
+    newGalleryThumbnailIndex < galleryFiles.length
+    ? newGalleryThumbnailIndex
+    : null;
+  const firstNewGalleryImageIndex = images.length;
 
-  for (const file of galleryFiles) {
+  for (const [index, file] of galleryFiles.entries()) {
     if (!supabaseConfigured) break;
-    const ext = file.name.split(".").pop() || "jpg";
-    const safeName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]+/g, "-");
-    const path = `${parsed.data.slug}/gallery-${Date.now()}-${safeName}.${ext}`;
+    const path = `${parsed.data.slug}/${getRandomStorageFileName(file, "gallery")}`;
     const { error: uploadError } = await supabase!.storage
       .from("product-images")
-      .upload(path, file, { upsert: true });
+      .upload(path, file, { upsert: false, contentType: file.type || undefined });
 
     if (uploadError) return { ok: false, message: uploadError.message };
     const { data } = supabase!.storage.from("product-images").getPublicUrl(path);
-    images.push({ url: data.publicUrl, alt: parsed.data.name });
+    images.push({
+      url: data.publicUrl,
+      alt: parsed.data.name,
+      isPrimary: index === selectedNewGalleryIndex,
+    });
   }
+
+  if (supabaseConfigured && selectedNewGalleryIndex !== null) {
+    images = images.map((image, index) => ({
+      ...image,
+      isPrimary: index === firstNewGalleryImageIndex + selectedNewGalleryIndex,
+    }));
+  }
+
+  const selectedThumbnail = images.find((image) => image.isPrimary) ??
+    images.find((image) => image.url === thumbnailUrl) ??
+    images[0];
+  thumbnailUrl = selectedThumbnail?.url;
+  images = images.map((image) => ({ ...image, isPrimary: Boolean(thumbnailUrl && image.url === thumbnailUrl) }));
 
   if (supabaseConfigured) {
     const keptImageUrls = new Set(images.map((image) => image.url));
@@ -798,7 +900,7 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
       .map((image) => getProductImageStoragePath(image.url))
       .filter((path): path is string => Boolean(path));
 
-    if (originalThumbnailUrl && originalThumbnailUrl !== thumbnailUrl) {
+    if (originalThumbnailUrl && originalThumbnailUrl !== thumbnailUrl && !keptImageUrls.has(originalThumbnailUrl)) {
       const thumbnailPath = getProductImageStoragePath(originalThumbnailUrl);
       if (thumbnailPath) removedPaths.push(thumbnailPath);
     }
@@ -897,4 +999,181 @@ export async function saveProduct(_: ActionState, formData: FormData): Promise<A
   revalidatePath("/products");
   revalidatePath("/admin/products");
   return { ok: true, message: "Đã lưu sản phẩm" };
+}
+
+export async function toggleProductActive(id: string, isActive: boolean): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để cập nhật sản phẩm." };
+  }
+
+  if (!supabaseConfigured && !postgresConfigured) {
+    return { ok: false, message: "Chưa cấu hình database để cập nhật sản phẩm." };
+  }
+
+  if (supabaseConfigured) {
+    const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+    const { error } = await supabase!
+      .from("products")
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { ok: false, message: error.message };
+  } else if (postgresConfigured) {
+    const pool = getPostgresPool();
+    await pool!.query("update public.products set is_active = $1, updated_at = now() where id = $2::uuid", [
+      isActive,
+      id,
+    ]);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/admin/products");
+  return { ok: true, message: isActive ? "Đã hiển thị sản phẩm." : "Đã ẩn sản phẩm." };
+}
+
+export async function saveCategory(_: ActionState, formData: FormData): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để lưu danh mục." };
+  }
+
+  const parsed = categorySchema.safeParse({
+    ...Object.fromEntries(formData.entries()),
+    isActive: formData.has("isActive"),
+  });
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Dữ liệu danh mục chưa hợp lệ" };
+  }
+
+  if (!supabaseConfigured && !postgresConfigured) {
+    return { ok: false, message: "Chưa cấu hình database để lưu danh mục." };
+  }
+
+  const payload = {
+    name: parsed.data.name,
+    slug: parsed.data.slug,
+    description: parsed.data.description || "",
+    sort_order: parsed.data.sortOrder,
+    is_active: parsed.data.isActive,
+    updated_at: new Date().toISOString(),
+  };
+
+  const id = formData.get("id")?.toString();
+  if (supabaseConfigured) {
+    const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+    const query = id
+      ? supabase!.from("categories").update(payload).eq("id", id)
+      : supabase!.from("categories").insert(payload);
+    const { error } = await query;
+    if (error) return { ok: false, message: error.message };
+  } else if (postgresConfigured) {
+    const pool = getPostgresPool();
+    const values = [
+      payload.name,
+      payload.slug,
+      payload.description,
+      payload.sort_order,
+      payload.is_active,
+      id,
+    ];
+    if (id) {
+      await pool!.query(
+        `update public.categories set
+          name=$1,slug=$2,description=$3,sort_order=$4,is_active=$5,updated_at=now()
+         where id=$6::uuid`,
+        values,
+      );
+    } else {
+      await pool!.query(
+        `insert into public.categories (name,slug,description,sort_order,is_active)
+         values ($1,$2,$3,$4,$5)
+         on conflict (slug) do update set
+          name=excluded.name,description=excluded.description,sort_order=excluded.sort_order,
+          is_active=excluded.is_active,updated_at=now()`,
+        values.slice(0, 5),
+      );
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+  return { ok: true, message: "Đã lưu danh mục." };
+}
+
+export async function toggleCategoryActive(id: string, isActive: boolean): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để cập nhật danh mục." };
+  }
+
+  if (!supabaseConfigured && !postgresConfigured) {
+    return { ok: false, message: "Chưa cấu hình database để cập nhật danh mục." };
+  }
+
+  if (supabaseConfigured) {
+    const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+    const { error } = await supabase!
+      .from("categories")
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { ok: false, message: error.message };
+  } else if (postgresConfigured) {
+    const pool = getPostgresPool();
+    await pool!.query("update public.categories set is_active = $1, updated_at = now() where id = $2::uuid", [
+      isActive,
+      id,
+    ]);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/admin/categories");
+  return { ok: true, message: isActive ? "Đã hiển thị danh mục." : "Đã ẩn danh mục." };
+}
+
+export async function deleteCategory(id: string): Promise<ActionState> {
+  if (!(await requireAdmin())) {
+    return { ok: false, message: "Bạn cần đăng nhập để xóa danh mục." };
+  }
+
+  if (!supabaseConfigured && !postgresConfigured) {
+    return { ok: false, message: "Chưa cấu hình database để xóa danh mục." };
+  }
+
+  let productCount = 0;
+  if (supabaseConfigured) {
+    const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+    const { count, error: countError } = await supabase!
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", id);
+    if (countError) return { ok: false, message: countError.message };
+    productCount = count ?? 0;
+
+    if (productCount === 0) {
+      const { error } = await supabase!.from("categories").delete().eq("id", id);
+      if (error) return { ok: false, message: error.message };
+    }
+  } else if (postgresConfigured) {
+    const pool = getPostgresPool();
+    const { rows } = await pool!.query(
+      "select count(*)::int as count from public.products where category_id = $1::uuid",
+      [id],
+    );
+    productCount = Number(rows[0]?.count ?? 0);
+
+    if (productCount === 0) {
+      await pool!.query("delete from public.categories where id = $1::uuid", [id]);
+    }
+  }
+
+  if (productCount > 0) {
+    return { ok: false, message: `Không thể xóa vì đang có ${productCount} sản phẩm dùng danh mục này.` };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/products");
+  return { ok: true, message: "Đã xóa danh mục." };
 }

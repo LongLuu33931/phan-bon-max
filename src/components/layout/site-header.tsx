@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Leaf, Mail, Phone } from "lucide-react";
 import { CartLink } from "@/components/cart/cart-link";
+import { SiteMobileMenu } from "@/components/layout/site-mobile-menu";
 import { getSettings } from "@/lib/data";
 
 const nav = [
@@ -24,11 +25,11 @@ export async function SiteHeader() {
             {settings.brandName} - {settings.tagline} theo từng giai đoạn
           </p>
           <div className="flex items-center gap-5">
-            <a href={`mailto:${settings.email}`} className="group flex items-center gap-2">
+            <a href={`mailto:${settings.email}`} className="group flex min-h-11 items-center gap-2">
               <Mail size={15} className="contact-wiggle text-emerald-700" />
               {settings.email}
             </a>
-            <a href={`tel:${settings.hotline.replace(/\s/g, "")}`} className="group flex items-center gap-2 text-amber-700">
+            <a href={`tel:${settings.hotline.replace(/\s/g, "")}`} className="group flex min-h-11 items-center gap-2 text-amber-700">
               <Phone size={15} className="contact-shake" />
               {settings.hotline}
             </a>
@@ -60,7 +61,7 @@ export async function SiteHeader() {
 
         <nav className="hidden items-center gap-8 text-sm font-bold text-stone-800 lg:flex">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="hover:text-emerald-800">
+            <Link key={item.href} href={item.href} className="flex min-h-11 items-center hover:text-emerald-800">
               {item.label}
             </Link>
           ))}
@@ -75,6 +76,7 @@ export async function SiteHeader() {
             {settings.hotline}
           </a>
           <CartLink />
+          <SiteMobileMenu nav={nav} email={settings.email} hotline={settings.hotline} />
         </div>
       </div>
     </header>

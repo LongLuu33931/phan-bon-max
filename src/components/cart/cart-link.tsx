@@ -68,7 +68,7 @@ export function CartLink() {
         ) : null}
       </Link>
 
-      <div className="invisible absolute right-0 top-full z-50 w-[min(22rem,calc(100vw-2rem))] pt-2 opacity-0 transition duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+      <div className="invisible absolute right-0 top-full z-50 hidden w-[min(22rem,calc(100vw-2rem))] pt-2 opacity-0 transition duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100 md:block">
         <div className="rounded-md border border-stone-200 bg-white p-4 text-stone-800 shadow-xl">
           <div className="flex items-center justify-between gap-3 border-b border-stone-100 pb-3">
             <p className="font-bold text-stone-950">Giỏ hàng</p>

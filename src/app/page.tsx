@@ -21,16 +21,14 @@ export default async function Home() {
   return (
     <PublicLayout>
       <HeroSlider
-        categories={categories}
         slides={settings.heroSlides ?? []}
         fallbackProduct={heroProduct}
-        zaloUrl={settings.zaloUrl}
       />
       <HomeFeatureStrip />
       <FeaturedProductsSection categories={categories} products={featured} />
       <TestimonialStack testimonials={testimonials} />
       <HomeNewsSection posts={posts} />
-      <HomeContactSection settings={settings} />
+      <HomeContactSection />
     </PublicLayout>
   );
 }

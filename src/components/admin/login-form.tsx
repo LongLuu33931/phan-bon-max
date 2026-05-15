@@ -1,19 +1,19 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
+import toast from "react-hot-toast";
 import { supabaseConfigured } from "@/lib/supabase";
 import { createSupabaseBrowserClient } from "@/lib/supabase-client";
 
 export function LoginForm() {
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function login(formData: FormData) {
     startTransition(async () => {
       if (!supabaseConfigured) {
-        setMessage("Chưa cấu hình đăng nhập.");
+        toast.error("Chưa cấu hình đăng nhập.");
         return;
       }
 
@@ -24,10 +24,11 @@ export function LoginForm() {
       });
 
       if (error) {
-        setMessage("Email hoặc mật khẩu chưa đúng.");
+        toast.error("Email hoặc mật khẩu chưa đúng.");
         return;
       }
 
+      toast.success("Đăng nhập thành công.");
       const next = searchParams.get("next");
       window.location.href = next?.startsWith("/admin") ? next : "/admin";
     });
@@ -46,7 +47,6 @@ export function LoginForm() {
       <button disabled={isPending} className="h-11 rounded-md bg-emerald-800 px-4 font-semibold text-white disabled:bg-stone-300">
         {isPending ? "Đang đăng nhập..." : "Đăng nhập"}
       </button>
-      {message ? <p className="text-sm font-semibold text-amber-700">{message}</p> : null}
     </form>
   );
 }

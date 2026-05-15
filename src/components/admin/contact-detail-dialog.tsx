@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, X } from "lucide-react";
 import { ContactStatusForm } from "@/components/admin/contact-status-form";
+import { formatDate } from "@/lib/format";
 import type { ContactMessage } from "@/lib/types";
 
 const statusLabels: Record<ContactMessage["status"], string> = {
@@ -51,7 +52,7 @@ export function ContactDetailDialog({ message }: { message: ContactMessage }) {
                   <h2 id={`contact-title-${message.id}`} className="mt-2 text-2xl font-black tracking-tight text-stone-950">
                     {message.customerName}
                   </h2>
-                  <p className="mt-2 text-sm font-semibold text-stone-500">{new Date(message.createdAt).toLocaleString("vi-VN")}</p>
+                  <p className="mt-2 text-sm font-semibold text-stone-500">{formatDate(message.createdAt)}</p>
                 </div>
                 <button
                   type="button"

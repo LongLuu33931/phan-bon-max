@@ -208,6 +208,27 @@ export async function getCategories() {
   return error || !data?.length ? categories : data.map(mapCategory);
 }
 
+export async function getAllCategoriesForAdmin() {
+  if (!supabaseConfigured && postgresConfigured) {
+    noStore();
+    const pool = getPostgresPool();
+    const { rows } = await pool!.query(
+      "select * from public.categories order by sort_order asc, updated_at desc",
+    );
+    return rows.map(mapCategory);
+  }
+  if (!supabaseConfigured) return categories;
+  noStore();
+  const supabase = createSupabaseAdminClient() ?? await createSupabaseServerClient();
+  const { data, error } = await supabase!
+    .from("categories")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("updated_at", { ascending: false });
+
+  return error || !data?.length ? categories : data.map(mapCategory);
+}
+
 export async function getProducts() {
   if (!supabaseConfigured && postgresConfigured) {
     noStore();

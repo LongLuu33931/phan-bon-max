@@ -10,6 +10,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Tags,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -28,6 +29,7 @@ type AdminLink = {
 const primaryLinks: AdminLink[] = [
   { href: "/admin", label: "Tổng quan", icon: BarChart3 },
   { href: "/admin/products", label: "Sản phẩm", icon: Package },
+  { href: "/admin/categories", label: "Danh mục", icon: Tags },
   { href: "/admin/testimonials", label: "Feedback khách", icon: MessageSquareQuote },
   { href: "/admin/contacts", label: "Liên hệ", icon: ClipboardList, badgeKey: "newContacts" },
   { href: "/admin/orders", label: "Đơn hàng", icon: ShoppingBag, badgeKey: "newOrders" },

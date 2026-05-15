@@ -26,7 +26,7 @@ export const contactMessageSchema = z.object({
   email: z.string().trim().email("Email chưa hợp lệ").optional().or(z.literal("")),
   province: z.string().trim().optional(),
   crop: z.string().trim().optional(),
-  message: z.string().trim().min(10, "Vui lòng nhập nội dung cần tư vấn"),
+  message: z.string().trim().min(10, "Nội dung cần tư vấn tối thiểu 10 ký tự"),
 });
 
 export const productSchema = z.object({
@@ -48,6 +48,14 @@ export const productSchema = z.object({
   seoTitle: z.string().trim().optional(),
   seoDescription: z.string().trim().optional(),
   isFeatured: z.coerce.boolean().default(false),
+  isActive: z.coerce.boolean().default(true),
+});
+
+export const categorySchema = z.object({
+  name: z.string().trim().min(2, "Vui lòng nhập tên danh mục"),
+  slug: z.string().trim().min(2, "Vui lòng nhập slug danh mục"),
+  description: z.string().trim().optional(),
+  sortOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.coerce.boolean().default(true),
 });
 

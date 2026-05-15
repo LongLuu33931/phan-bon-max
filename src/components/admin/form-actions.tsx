@@ -9,11 +9,11 @@ type FormActionsProps = {
   ok?: boolean;
 };
 
-export function AdminFormActions({ children, message, ok }: FormActionsProps) {
+export function AdminFormActions({ children }: FormActionsProps) {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center">
+    <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white/95 p-4 shadow-[0_18px_55px_rgba(15,23,42,0.18)] backdrop-blur sm:flex-row sm:items-center lg:left-80 lg:right-8">
       <button
         type="button"
         onClick={() => router.back()}
@@ -21,13 +21,7 @@ export function AdminFormActions({ children, message, ok }: FormActionsProps) {
       >
         <ArrowLeft size={17} /> Quay lại
       </button>
-      {message ? (
-        <p className={`${ok ? "text-emerald-700" : "text-amber-700"} text-sm font-bold sm:flex-1`}>
-          {message}
-        </p>
-      ) : (
-        <span className="hidden sm:block sm:flex-1" />
-      )}
+      <span className="hidden sm:block sm:flex-1" />
       <div className="flex justify-end sm:ml-auto">{children}</div>
     </div>
   );

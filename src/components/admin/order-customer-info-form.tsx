@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { updateOrderCustomerInfo, type ActionState } from "@/lib/actions";
 import type { Order } from "@/lib/types";
 
@@ -26,6 +27,7 @@ function SubmitButton() {
 
 export function OrderCustomerInfoForm({ order }: { order: Order }) {
   const [state, formAction] = useActionState(updateOrderCustomerInfo, initialState);
+  useActionToast(state);
 
   return (
     <form action={formAction} className="grid gap-3">
@@ -44,9 +46,6 @@ export function OrderCustomerInfoForm({ order }: { order: Order }) {
       </label>
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton />
-        {state.message ? (
-          <p className={`text-xs font-semibold ${state.ok ? "text-emerald-700" : "text-red-600"}`}>{state.message}</p>
-        ) : null}
       </div>
     </form>
   );

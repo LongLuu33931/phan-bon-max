@@ -3,10 +3,10 @@ import { Plus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ProductsTable } from "@/components/admin/products-table";
-import { getAllProductsForAdmin, getCategories } from "@/lib/data";
+import { getAllCategoriesForAdmin, getAllProductsForAdmin } from "@/lib/data";
 
 export default async function AdminProductsPage() {
-  const [products, categories] = await Promise.all([getAllProductsForAdmin(), getCategories()]);
+  const [products, categories] = await Promise.all([getAllProductsForAdmin(), getAllCategoriesForAdmin()]);
 
   return (
     <AdminShell>

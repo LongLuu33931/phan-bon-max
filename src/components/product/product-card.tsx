@@ -35,7 +35,7 @@ export function ProductCard({
           <p className="font-bold text-amber-700">{formatCurrency(product.price)}</p>
           <Link
             href={`/products/${product.slug}`}
-            className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-800 text-white"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-800 text-white"
             aria-label={`Xem ${product.name}`}
           >
             <ShoppingBag size={18} />

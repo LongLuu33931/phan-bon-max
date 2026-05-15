@@ -1,6 +1,6 @@
 import { Package, Phone } from "lucide-react";
 import { OrderDetailDialog } from "@/components/admin/order-detail-dialog";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import type { Order } from "@/lib/types";
 
 const statusLabels: Record<Order["status"], string> = {
@@ -69,7 +69,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs font-semibold text-stone-500">
-                    {new Date(order.createdAt).toLocaleString("vi-VN")}
+                    {formatDate(order.createdAt)}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <OrderDetailDialog order={order} />

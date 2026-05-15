@@ -34,7 +34,7 @@ export function FeaturedProductsSection({ categories, products }: FeaturedProduc
               <p className="font-semibold text-emerald-800">Sản phẩm nổi bật</p>
               <h2 className="mt-2 text-3xl font-black text-stone-950">Bộ sản phẩm MAX 8000</h2>
             </div>
-            <Link href="/products" className="inline-flex items-center gap-2 font-semibold text-emerald-800">
+            <Link href="/products" className="inline-flex min-h-11 items-center gap-2 font-semibold text-emerald-800">
               Xem tất cả <ArrowRight size={16} />
             </Link>
           </div>

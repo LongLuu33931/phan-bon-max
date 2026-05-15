@@ -1,5 +1,6 @@
 import { Mail, Phone } from "lucide-react";
 import { ContactDetailDialog } from "@/components/admin/contact-detail-dialog";
+import { formatDate } from "@/lib/format";
 import type { ContactMessage } from "@/lib/types";
 
 const statusLabels: Record<ContactMessage["status"], string> = {
@@ -57,7 +58,7 @@ export function ContactsTable({ messages }: { messages: ContactMessage[] }) {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs font-semibold text-stone-500">
-                    {new Date(message.createdAt).toLocaleString("vi-VN")}
+                    {formatDate(message.createdAt)}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <ContactDetailDialog message={message} />

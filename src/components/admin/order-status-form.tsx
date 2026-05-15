@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { updateOrderStatus, type ActionState } from "@/lib/actions";
 import type { Order } from "@/lib/types";
 
@@ -31,6 +32,7 @@ function SubmitButton() {
 
 export function OrderStatusForm({ orderId, status }: { orderId: string; status: Order["status"] }) {
   const [state, formAction] = useActionState(updateOrderStatus, initialState);
+  useActionToast(state);
 
   return (
     <form action={formAction} className="grid gap-3">
@@ -49,9 +51,6 @@ export function OrderStatusForm({ orderId, status }: { orderId: string; status: 
         </select>
         <SubmitButton />
       </div>
-      {state.message ? (
-        <p className={`text-xs font-semibold ${state.ok ? "text-emerald-700" : "text-red-600"}`}>{state.message}</p>
-      ) : null}
     </form>
   );
 }

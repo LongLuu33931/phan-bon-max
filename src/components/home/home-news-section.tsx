@@ -11,7 +11,7 @@ export function HomeNewsSection({ posts }: { posts: Post[] }) {
           <p className="font-semibold text-emerald-800">Tin tức</p>
           <h2 className="mt-2 text-3xl font-black text-stone-950">Cập nhật nông nghiệp</h2>
         </div>
-        <Link href="/news" className="inline-flex items-center gap-2 font-semibold text-emerald-800">
+        <Link href="/news" className="inline-flex min-h-11 items-center gap-2 font-semibold text-emerald-800">
           Xem tất cả <ArrowRight size={16} />
         </Link>
       </div>

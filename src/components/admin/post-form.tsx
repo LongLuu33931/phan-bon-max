@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Bold, Eye, Heading2, ImagePlus, Italic, Link as LinkIcon, List, ListOrdered, Quote, Save, UploadCloud } from "lucide-react";
+import toast from "react-hot-toast";
 import { AdminFormActions } from "@/components/admin/form-actions";
 import { MarkdownContent } from "@/components/markdown-content";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { savePost, uploadPostImage, type ActionState } from "@/lib/actions";
 import type { Post } from "@/lib/types";
 
@@ -25,6 +28,9 @@ const markdownTools = [
 
 function toDateTimeLocal(value?: string) {
   if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)) {
+    return value.slice(0, 16);
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value.slice(0, 16);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -60,22 +66,51 @@ function formatSelectedLines(value: string, prefix: string, mode: "line" | "orde
 }
 
 export function PostForm({ post }: { post?: Post }) {
+  const router = useRouter();
   const [state, action, isPending] = useActionState(savePost, initialState);
+  useActionToast(state);
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? makeSlug(post?.title ?? ""));
   const [content, setContent] = useState(post?.content ?? "");
   const [coverPreview, setCoverPreview] = useState(post?.coverImageUrl ?? "");
+  const coverPreviewObjectUrlRef = useRef("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [uploadMessage, setUploadMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
   const resolvedSlug = slug || makeSlug(title);
 
+  useEffect(() => {
+    return () => {
+      if (coverPreviewObjectUrlRef.current) URL.revokeObjectURL(coverPreviewObjectUrlRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (state.ok) router.push("/admin/posts");
+  }, [router, state.ok]);
+
+  function previewCoverImage(file?: File) {
+    if (coverPreviewObjectUrlRef.current) URL.revokeObjectURL(coverPreviewObjectUrlRef.current);
+
+    if (!file) {
+      coverPreviewObjectUrlRef.current = "";
+      setCoverPreview(post?.coverImageUrl ?? "");
+      return;
+    }
+
+    const next = URL.createObjectURL(file);
+    coverPreviewObjectUrlRef.current = next;
+    setCoverPreview(next);
+  }
+
   function insertMarkdown(before: string, after = "", placeholder = "nội dung", mode?: "line" | "ordered") {
-    const textarea = document.querySelector<HTMLTextAreaElement>("textarea[name='content']");
+    const textarea = textareaRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
+    const scrollTop = textarea.scrollTop;
     const selected = content.slice(start, end) || placeholder;
     const formatted = mode ? formatSelectedLines(selected, before, mode) : `${before}${selected}${after}`;
     const next = `${content.slice(0, start)}${formatted}${content.slice(end)}`;
@@ -83,11 +118,13 @@ export function PostForm({ post }: { post?: Post }) {
 
     requestAnimationFrame(() => {
       textarea.focus();
+      textarea.scrollTop = scrollTop;
       if (mode) {
         textarea.setSelectionRange(start, start + formatted.length);
       } else {
         textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
       }
+      textarea.scrollTop = scrollTop;
     });
   }
 
@@ -102,19 +139,21 @@ export function PostForm({ post }: { post?: Post }) {
       const result = await uploadPostImage(formData);
       if (!result.ok || !result.url) {
         setUploadMessage(result.message);
+        toast.error(result.message);
         return;
       }
 
       const alt = file.name.replace(/\.[^.]+$/, "") || "Hình ảnh bài viết";
       insertMarkdown("![", `](${result.url})`, alt);
       setUploadMessage("Đã upload và chèn hình ảnh vào bài viết.");
+      toast.success("Đã upload và chèn hình ảnh vào bài viết.");
     } finally {
       setIsUploading(false);
     }
   }
 
   return (
-    <form action={action} className="grid gap-5">
+    <form action={action} className="grid gap-5 pb-28">
       {post ? <input type="hidden" name="id" value={post.id} /> : null}
       <input type="hidden" name="slug" value={resolvedSlug} />
       <input type="hidden" name="coverImageUrl" value={coverPreview} />
@@ -164,7 +203,7 @@ export function PostForm({ post }: { post?: Post }) {
               className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-normal file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-900 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (file) setCoverPreview(URL.createObjectURL(file));
+                previewCoverImage(file);
               }}
             />
           </label>
@@ -174,9 +213,11 @@ export function PostForm({ post }: { post?: Post }) {
           </label>
           {coverPreview ? (
             <div className="lg:col-span-2">
-              <p className="mb-2 text-sm font-bold text-stone-700">Ảnh bìa hiện tại</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverPreview} alt="Ảnh bìa bài viết" className="h-56 w-full rounded-xl border border-stone-200 object-cover" />
+              <p className="mb-2 text-sm font-bold text-stone-700">Preview ảnh bìa</p>
+              <div className="max-w-2xl overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverPreview} alt="Preview ảnh bìa bài viết" className="aspect-[16/9] w-full object-cover" />
+              </div>
             </div>
           ) : null}
         </div>
@@ -203,6 +244,7 @@ export function PostForm({ post }: { post?: Post }) {
                     <button
                       key={tool.label}
                       type="button"
+                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => insertMarkdown(tool.before, tool.after, tool.placeholder, tool.mode as "line" | "ordered" | undefined)}
                       title={tool.label}
                       className="inline-grid size-9 place-items-center rounded-lg border border-stone-200 bg-white text-stone-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
@@ -213,6 +255,7 @@ export function PostForm({ post }: { post?: Post }) {
                 })}
                 <button
                   type="button"
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={() => document.getElementById(inlineImageInputId)?.click()}
                   title="Upload hình ảnh"
                   disabled={isUploading}
@@ -235,6 +278,7 @@ export function PostForm({ post }: { post?: Post }) {
             </div>
             <div className="h-[62vh] min-h-[460px] max-h-[760px] focus-within:ring-4 focus-within:ring-emerald-100">
               <textarea
+                ref={textareaRef}
                 name="content"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
@@ -258,20 +302,6 @@ export function PostForm({ post }: { post?: Post }) {
               )}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-        <h2 className="text-lg font-black text-stone-950">SEO</h2>
-        <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          <label className={labelClass}>
-            SEO title
-            <input name="seoTitle" defaultValue={post?.title} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            SEO description
-            <input name="seoDescription" defaultValue={post?.excerpt} className={inputClass} />
-          </label>
         </div>
       </section>
 

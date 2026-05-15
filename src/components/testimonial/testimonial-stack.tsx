@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { Quote, Star } from "lucide-react";
 import clsx from "clsx";
@@ -17,6 +18,21 @@ function getInitials(name: string) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+}
+
+function renderHighlightedQuote(quote: string) {
+  const parts = quote.split(/(\[\[[^\]]+\]\])/g).filter(Boolean);
+
+  return parts.map((part, index) => {
+    const match = part.match(/^\[\[(.+)\]\]$/);
+    if (!match) return <span key={index}>{part}</span>;
+
+    return (
+      <span key={index} className="rounded-md bg-amber-200/95 px-1.5 py-0.5 text-emerald-950">
+        {match[1]}
+      </span>
+    );
+  });
 }
 
 export function TestimonialStack({ testimonials }: TestimonialStackProps) {
@@ -79,10 +95,20 @@ export function TestimonialStack({ testimonials }: TestimonialStackProps) {
                 }}
               >
                 <Quote className={clsx("mb-5", isActive ? "text-emerald-200" : "text-emerald-300/70")} size={28} fill="currentColor" />
-                <p className="text-lg font-black leading-8 sm:text-xl sm:leading-9">“{testimonial.quote}”</p>
+                <p className="text-lg font-black leading-8 sm:text-xl sm:leading-9">“{renderHighlightedQuote(testimonial.quote)}”</p>
                 <div className="mt-7 flex items-center gap-4">
-                  <span className={clsx("grid size-12 shrink-0 place-items-center rounded-full text-sm font-black", isActive ? "bg-white/15" : "bg-white/10")}>
-                    {initials}
+                  <span className={clsx("relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full text-sm font-black", isActive ? "bg-white/15" : "bg-white/10")}>
+                    {testimonial.avatarUrl ? (
+                      <Image
+                        src={testimonial.avatarUrl}
+                        alt={testimonial.customerName}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      initials
+                    )}
                   </span>
                   <span className="min-w-0">
                     <span className="block font-black">{testimonial.customerName}</span>

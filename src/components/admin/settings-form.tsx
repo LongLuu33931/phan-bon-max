@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useState } from "react";
-import { ImagePlus, Plus, Trash2, UploadCloud } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ImagePlus, Plus, Trash2, UploadCloud } from "lucide-react";
 import { AdminFormActions } from "@/components/admin/form-actions";
+import { useActionToast } from "@/hooks/use-action-toast";
 import { saveSiteSettings, type ActionState } from "@/lib/actions";
 import type { HeroSlide, SiteSettings } from "@/lib/types";
 
@@ -32,12 +33,101 @@ function updateSlide(slides: HeroSlide[], index: number, patch: Partial<HeroSlid
 
 export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [state, action, isPending] = useActionState(saveSiteSettings, initialState);
+  useActionToast(state);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(
     settings.heroSlides?.length ? settings.heroSlides : [createDefaultSlide()],
   );
+  const [logoPreview, setLogoPreview] = useState("");
+  const [heroImagePreviews, setHeroImagePreviews] = useState<Record<number, string>>({});
+  const logoPreviewRef = useRef("");
+  const heroImagePreviewsRef = useRef<Record<number, string>>({});
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewRef.current) URL.revokeObjectURL(logoPreviewRef.current);
+      Object.values(heroImagePreviewsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  function previewLogo(file?: File) {
+    if (logoPreviewRef.current) URL.revokeObjectURL(logoPreviewRef.current);
+
+    const next = file ? URL.createObjectURL(file) : "";
+    logoPreviewRef.current = next;
+    setLogoPreview(next);
+  }
+
+  function previewHeroImage(index: number, file?: File) {
+    setHeroImagePreviews((previews) => {
+      const current = previews[index];
+      if (current) URL.revokeObjectURL(current);
+
+      if (!file) {
+        const next = { ...previews };
+        delete next[index];
+        heroImagePreviewsRef.current = next;
+        return next;
+      }
+
+      const next = { ...previews, [index]: URL.createObjectURL(file) };
+      heroImagePreviewsRef.current = next;
+      return next;
+    });
+  }
+
+  function removeHeroSlide(index: number) {
+    setHeroSlides((slides) => slides.filter((_, slideIndex) => slideIndex !== index));
+    setHeroImagePreviews((previews) => {
+      const next: Record<number, string> = {};
+
+      Object.entries(previews).forEach(([key, url]) => {
+        const previewIndex = Number(key);
+        if (previewIndex === index) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        next[previewIndex > index ? previewIndex - 1 : previewIndex] = url;
+      });
+
+      heroImagePreviewsRef.current = next;
+      return next;
+    });
+  }
+
+  function moveHeroSlide(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= heroSlides.length) return;
+
+    setHeroSlides((slides) => {
+      const next = [...slides];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+
+    setHeroImagePreviews((previews) => {
+      const next = { ...previews };
+      const currentPreview = next[index];
+      const targetPreview = next[nextIndex];
+
+      if (targetPreview) {
+        next[index] = targetPreview;
+      } else {
+        delete next[index];
+      }
+
+      if (currentPreview) {
+        next[nextIndex] = currentPreview;
+      } else {
+        delete next[nextIndex];
+      }
+
+      heroImagePreviewsRef.current = next;
+      return next;
+    });
+  }
 
   return (
-    <form action={action} className="grid gap-5">
+    <form action={action} className="grid gap-5 pb-28">
       <input type="hidden" name="logoUrl" value={settings.logoUrl} />
       <input type="hidden" name="heroSlidesJson" value={JSON.stringify(heroSlides)} />
 
@@ -57,7 +147,10 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           </label>
           <div className="grid gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4 lg:col-span-2 lg:grid-cols-[220px_1fr]">
             <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-stone-200 bg-white">
-              {settings.logoUrl ? (
+              {logoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoPreview} alt={settings.brandName} className="h-full w-full object-contain p-4" />
+              ) : settings.logoUrl ? (
                 <Image src={settings.logoUrl} alt={settings.brandName} fill sizes="220px" className="object-contain p-4" />
               ) : (
                 <div className="grid h-full place-items-center text-stone-400">
@@ -75,7 +168,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
                 <span className="flex items-center gap-2 text-xs font-semibold text-stone-500">
                   <UploadCloud size={15} /> PNG, JPG, SVG hoặc WebP
                 </span>
-                <input name="logo" type="file" accept="image/*,.svg" className={fileClass} />
+                <input name="logo" type="file" accept="image/*,.svg" className={fileClass} onChange={(event) => previewLogo(event.target.files?.[0])} />
               </label>
             </div>
           </div>
@@ -97,52 +190,85 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           </button>
         </div>
 
-        <div className="mt-5 grid gap-4">
-          {heroSlides.map((slide, index) => (
-            <div key={index} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-stone-950">Slide {index + 1}</p>
-                  <p className="mt-1 text-xs font-semibold text-stone-500">{slide.isActive ? "Đang hiển thị" : "Đang ẩn"}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setHeroSlides((slides) => slides.filter((_, slideIndex) => slideIndex !== index))}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 text-xs font-black text-red-700"
-                >
-                  <Trash2 size={14} /> Xóa
-                </button>
-              </div>
+        <div className="mt-4 grid gap-3">
+          {heroSlides.map((slide, index) => {
+            const previewUrl = heroImagePreviews[index];
 
-              <div className="grid gap-5 xl:grid-cols-[340px_1fr]">
-                <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-stone-200 bg-white">
-                  {slide.imageUrl ? (
-                    <Image src={slide.imageUrl} alt={`Hero slide ${index + 1}`} fill sizes="340px" className="object-cover" />
+            return (
+            <div
+              key={index}
+              className="grid gap-4 rounded-xl border border-stone-200 bg-stone-50 p-3 md:grid-cols-[220px_1fr_auto] md:items-center"
+            >
+              <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-stone-200 bg-white">
+                  {previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={previewUrl} alt={`Hero slide ${index + 1}`} className="h-full w-full object-cover" />
+                  ) : slide.imageUrl ? (
+                    <Image src={slide.imageUrl} alt={`Hero slide ${index + 1}`} fill sizes="220px" className="object-cover" />
                   ) : (
                     <div className="grid h-full place-items-center text-stone-400">
-                      <ImagePlus size={42} />
+                      <ImagePlus size={34} />
                     </div>
                   )}
                 </div>
 
-                <div className="grid content-center gap-4">
-                  <label className={labelClass}>
-                    Upload ảnh slide
-                    <input name={`heroImage-${index}`} type="file" accept="image/*" className={fileClass} />
-                  </label>
-                  <label className="flex h-12 items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 text-sm font-bold text-stone-700">
+                <div className="min-w-0">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-black text-stone-950">Slide {index + 1}</p>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${slide.isActive ? "bg-emerald-100 text-emerald-800" : "bg-stone-200 text-stone-600"}`}>
+                      {slide.isActive ? "Đang hiển thị" : "Đang ẩn"}
+                    </span>
+                  </div>
+                    <input
+                      name={`heroImage-${index}`}
+                      type="file"
+                      accept="image/*"
+                      className={`${fileClass} w-full`}
+                      onChange={(event) => previewHeroImage(index, event.target.files?.[0])}
+                    />
+                </div>
+
+                <div className="flex items-center justify-between gap-3 md:w-40 md:flex-col md:items-stretch">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      aria-label={`Đưa slide ${index + 1} lên trước`}
+                      disabled={index === 0}
+                      onClick={() => moveHeroSlide(index, -1)}
+                      className="grid h-9 place-items-center rounded-lg border border-stone-200 bg-white text-stone-700 disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <ArrowUp size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Đưa slide ${index + 1} xuống sau`}
+                      disabled={index === heroSlides.length - 1}
+                      onClick={() => moveHeroSlide(index, 1)}
+                      className="grid h-9 place-items-center rounded-lg border border-stone-200 bg-white text-stone-700 disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      <ArrowDown size={16} />
+                    </button>
+                  </div>
+                  <label className="flex h-10 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 text-sm font-bold text-stone-700">
                     <input
                       type="checkbox"
                       checked={slide.isActive}
                       onChange={(event) => setHeroSlides((slides) => updateSlide(slides, index, { isActive: event.target.checked }))}
                       className="size-4 accent-emerald-800"
                     />
-                    Hiển thị slide
+                    Hiển thị
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => removeHeroSlide(index)}
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 text-xs font-black text-red-700"
+                  >
+                    <Trash2 size={14} /> Xóa
+                  </button>
                 </div>
-              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

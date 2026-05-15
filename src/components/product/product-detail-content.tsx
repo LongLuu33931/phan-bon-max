@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Phone } from "lucide-react";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { ProductCard } from "@/components/product/product-card";
-import { ProductThumb } from "@/components/product/product-thumb";
+import { ProductGallery } from "@/components/product/product-gallery";
 import { formatCurrency } from "@/lib/format";
 import type { Category, Product, SiteSettings } from "@/lib/types";
 
@@ -18,8 +18,12 @@ export function ProductDetailContent({ categories, category, product, related, s
   return (
     <>
       <section className="section py-10">
-        <div className="text-sm text-stone-500">
-          <Link href="/">Trang chủ</Link> / <Link href="/products">Sản phẩm</Link> / {category?.name}
+        <div className="flex flex-wrap items-center gap-x-1 text-sm text-stone-500">
+          <Link href="/" className="inline-flex min-h-11 items-center">Trang chủ</Link>
+          <span>/</span>
+          <Link href="/products" className="inline-flex min-h-11 items-center">Sản phẩm</Link>
+          <span>/</span>
+          <span>{category?.name}</span>
         </div>
         <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <ProductGallery product={product} />
@@ -49,26 +53,6 @@ export function ProductDetailContent({ categories, category, product, related, s
   );
 }
 
-function ProductGallery({ product }: { product: Product }) {
-  return (
-    <div className="min-w-0">
-      <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
-        <ProductThumb product={product} priority />
-      </div>
-      {product.images.length ? (
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          {product.images.slice(0, 6).map((image) => (
-            <div key={image.url} className="aspect-square overflow-hidden rounded-md border border-stone-200 bg-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function ProductInformation({ product }: { product: Product }) {
   return (
     <section className="bg-white py-12">
@@ -84,7 +68,7 @@ function ProductInformation({ product }: { product: Product }) {
             ))}
           </div>
         </aside>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-2xl font-black text-stone-950">Mô tả</h2>
           <p className="mt-3 leading-8 text-stone-700">{product.description}</p>
 
@@ -99,7 +83,7 @@ function ProductInformation({ product }: { product: Product }) {
           </div>
 
           <h2 className="mt-10 text-2xl font-black text-stone-950">Hướng dẫn sử dụng</h2>
-          <div className="mt-4 overflow-hidden rounded-lg border border-stone-200">
+          <div className="mt-4 overflow-x-auto rounded-lg border border-stone-200">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-emerald-900 text-white">
                 <tr>

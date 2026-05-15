@@ -1,7 +1,6 @@
 import { ContactForm } from "@/components/contact/contact-form";
-import type { SiteSettings } from "@/lib/types";
 
-export function HomeContactSection({ settings }: { settings: SiteSettings }) {
+export function HomeContactSection() {
   return (
     <section className="bg-white py-14">
       <div className="section">
@@ -14,11 +13,6 @@ export function HomeContactSection({ settings }: { settings: SiteSettings }) {
             <p className="mt-4 leading-7 text-emerald-50/85">
               Để lại số điện thoại, loại cây và tình trạng đang gặp. Đội ngũ MAX 8000 sẽ liên hệ lại để gợi ý sản phẩm phù hợp.
             </p>
-            <div className="mt-5 grid gap-3 text-sm font-semibold text-emerald-50/90">
-              <p>Hotline: {settings.hotline}</p>
-              <p>Email: {settings.email}</p>
-              <p>Zalo: tư vấn nhanh qua số điện thoại cửa hàng</p>
-            </div>
           </div>
           <ContactForm />
         </div>
