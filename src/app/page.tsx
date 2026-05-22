@@ -42,11 +42,11 @@ export default async function Home() {
             <HomeFeatureStrip />
             <HomePainPointsSection />
             <HomeSolutionSection brandName={settings.brandName} />
-            <HomeWhyChooseSection />
             <FeaturedProductsSection
                 categories={categories}
                 products={featured}
             />
+            <HomeWhyChooseSection />
             <TestimonialStack testimonials={testimonials} />
             <HomeNewsSection posts={posts} />
             <HomeContactSection />
