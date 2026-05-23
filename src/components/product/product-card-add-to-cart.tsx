@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { CartItem, Product } from "@/lib/types";
 
 const CART_KEY = "max8000-cart";
@@ -20,6 +20,7 @@ function readCart() {
 export function ProductCardAddToCart({ product }: { product: Product }) {
     const [added, setAdded] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         return () => {
@@ -51,6 +52,7 @@ export function ProductCardAddToCart({ product }: { product: Product }) {
         localStorage.setItem(CART_KEY, JSON.stringify(next));
         window.dispatchEvent(new Event(CART_UPDATED_EVENT));
         setAdded(true);
+        router.push("/cart");
 
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => setAdded(false), 1400);
@@ -60,7 +62,7 @@ export function ProductCardAddToCart({ product }: { product: Product }) {
         <button
             type="button"
             onClick={addToCart}
-            className="flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-emerald-800 px-4 text-sm font-semibold text-white transition hover:bg-emerald-900"
+            className="flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-emerald-800 px-2.5 text-xs font-semibold text-white transition hover:bg-emerald-900 sm:h-11 sm:px-4 sm:text-sm"
             aria-label={`${BUY_NOW_LABEL} ${product.name}`}
             title={added ? ADDED_LABEL : BUY_NOW_LABEL}
         >

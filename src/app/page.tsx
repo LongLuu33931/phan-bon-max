@@ -39,7 +39,7 @@ export default async function Home() {
                 slides={settings.heroSlides ?? []}
                 fallbackProduct={heroProduct}
             />
-            <HomeFeatureStrip />
+            {/* <HomeFeatureStrip /> */}
             <HomePainPointsSection />
             <HomeSolutionSection brandName={settings.brandName} />
             <FeaturedProductsSection

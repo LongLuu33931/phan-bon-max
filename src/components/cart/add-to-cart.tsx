@@ -1,29 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
-import type { Product } from "@/lib/types";
+import type { CartItem, Product } from "@/lib/types";
 
 const CART_KEY = "max8000-cart";
 const CART_UPDATED_EVENT = "max8000-cart-updated";
 
+function readCart() {
+  try {
+    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+  } catch {
+    return [];
+  }
+}
+
 export function AddToCart({ product }: { product: Product }) {
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const router = useRouter();
 
   function changeQuantity(next: number) {
     setQuantity(Math.min(99, Math.max(1, next)));
   }
 
   function add() {
-    const current = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
-      productId: string;
-      quantity: number;
-    }>;
+    const current = readCart();
     const existing = current.find((item) => item.productId === product.id);
     const next = existing
       ? current.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item,
+          item.productId === product.id
+            ? { ...item, quantity: Math.min(99, item.quantity + quantity) }
+            : item,
         )
       : [
           ...current,
@@ -40,6 +49,7 @@ export function AddToCart({ product }: { product: Product }) {
     localStorage.setItem(CART_KEY, JSON.stringify(next));
     setAdded(true);
     window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+    router.push("/cart");
   }
 
   return (
@@ -78,7 +88,7 @@ export function AddToCart({ product }: { product: Product }) {
         className="flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-800 px-5 text-sm font-semibold text-white hover:bg-emerald-900"
       >
         <ShoppingCart size={18} />
-        {added ? "Đã thêm vào giỏ" : "Thêm vào giỏ hàng"}
+        {added ? "Đang chuyển đến giỏ hàng" : "Mua ngay"}
       </button>
     </div>
   );

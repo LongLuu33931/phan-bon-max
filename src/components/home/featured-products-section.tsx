@@ -38,7 +38,7 @@ export function FeaturedProductsSection({ categories, products }: FeaturedProduc
               Xem tất cả <ArrowRight size={16} />
             </Link>
           </div>
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-5 xl:grid-cols-3">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

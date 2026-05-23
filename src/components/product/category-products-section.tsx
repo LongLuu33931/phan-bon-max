@@ -12,7 +12,7 @@ export function CategoryProductsSection({ categories, category, products }: Cate
     <section className="section py-10">
       <h1 className="text-3xl font-black text-stone-950">{category.name}</h1>
       <p className="mt-3 max-w-3xl leading-7 text-stone-600">{category.description}</p>
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-5 lg:grid-cols-4">
         {products.map((product) => (
           <ProductCard
             key={product.id}
