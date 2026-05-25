@@ -28,6 +28,10 @@ export const siteSettings: SiteSettings = {
             isActive: true,
         },
     ],
+    promoPopup: {
+        desktopImageUrl: "",
+        mobileImageUrl: "",
+    },
 };
 
 export const categories: Category[] = [

@@ -39,13 +39,19 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   );
   const [logoPreview, setLogoPreview] = useState("");
   const [heroImagePreviews, setHeroImagePreviews] = useState<Record<number, string>>({});
+  const [popupDesktopPreview, setPopupDesktopPreview] = useState("");
+  const [popupMobilePreview, setPopupMobilePreview] = useState("");
   const logoPreviewRef = useRef("");
   const heroImagePreviewsRef = useRef<Record<number, string>>({});
+  const popupDesktopPreviewRef = useRef("");
+  const popupMobilePreviewRef = useRef("");
 
   useEffect(() => {
     return () => {
       if (logoPreviewRef.current) URL.revokeObjectURL(logoPreviewRef.current);
       Object.values(heroImagePreviewsRef.current).forEach((url) => URL.revokeObjectURL(url));
+      if (popupDesktopPreviewRef.current) URL.revokeObjectURL(popupDesktopPreviewRef.current);
+      if (popupMobilePreviewRef.current) URL.revokeObjectURL(popupMobilePreviewRef.current);
     };
   }, []);
 
@@ -73,6 +79,20 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
       heroImagePreviewsRef.current = next;
       return next;
     });
+  }
+
+  function previewPopupDesktop(file?: File) {
+    if (popupDesktopPreviewRef.current) URL.revokeObjectURL(popupDesktopPreviewRef.current);
+    const next = file ? URL.createObjectURL(file) : "";
+    popupDesktopPreviewRef.current = next;
+    setPopupDesktopPreview(next);
+  }
+
+  function previewPopupMobile(file?: File) {
+    if (popupMobilePreviewRef.current) URL.revokeObjectURL(popupMobilePreviewRef.current);
+    const next = file ? URL.createObjectURL(file) : "";
+    popupMobilePreviewRef.current = next;
+    setPopupMobilePreview(next);
   }
 
   function removeHeroSlide(index: number) {
@@ -130,6 +150,8 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
     <form action={action} className="grid gap-5 pb-28">
       <input type="hidden" name="logoUrl" value={settings.logoUrl} />
       <input type="hidden" name="heroSlidesJson" value={JSON.stringify(heroSlides)} />
+      <input type="hidden" name="promoPopupDesktopUrl" value={settings.promoPopup.desktopImageUrl} />
+      <input type="hidden" name="promoPopupMobileUrl" value={settings.promoPopup.mobileImageUrl} />
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
         <div className="border-b border-stone-100 pb-5">
@@ -269,6 +291,57 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
             </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+        <div className="border-b border-stone-100 pb-5">
+          <h2 className="text-lg font-black text-stone-950">Popup khuyến mãi</h2>
+          <p className="mt-1 text-sm text-stone-500">Cấu hình popup khuyến mãi hiển thị trên website. Upload ảnh cho bản PC và bản mobile.</p>
+        </div>
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-stone-200 bg-white">
+              {popupDesktopPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={popupDesktopPreview} alt="Popup khuyến mãi PC" className="h-full w-full object-cover" />
+              ) : settings.promoPopup.desktopImageUrl ? (
+                <Image src={settings.promoPopup.desktopImageUrl} alt="Popup khuyến mãi PC" fill sizes="400px" className="object-cover" />
+              ) : (
+                <div className="grid h-full place-items-center text-stone-400">
+                  <ImagePlus size={42} />
+                </div>
+              )}
+            </div>
+            <label className={labelClass}>
+              Ảnh cho PC (Desktop)
+              <span className="flex items-center gap-2 text-xs font-semibold text-stone-500">
+                <UploadCloud size={15} /> PNG, JPG hoặc WebP
+              </span>
+              <input name="popupDesktop" type="file" accept="image/*" className={fileClass} onChange={(event) => previewPopupDesktop(event.target.files?.[0])} />
+            </label>
+          </div>
+          <div className="grid gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+            <div className="relative aspect-[9/16] max-h-[400px] overflow-hidden rounded-xl border border-stone-200 bg-white">
+              {popupMobilePreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={popupMobilePreview} alt="Popup khuyến mãi Mobile" className="h-full w-full object-cover" />
+              ) : settings.promoPopup.mobileImageUrl ? (
+                <Image src={settings.promoPopup.mobileImageUrl} alt="Popup khuyến mãi Mobile" fill sizes="200px" className="object-cover" />
+              ) : (
+                <div className="grid h-full place-items-center text-stone-400">
+                  <ImagePlus size={42} />
+                </div>
+              )}
+            </div>
+            <label className={labelClass}>
+              Ảnh cho Mobile
+              <span className="flex items-center gap-2 text-xs font-semibold text-stone-500">
+                <UploadCloud size={15} /> PNG, JPG hoặc WebP
+              </span>
+              <input name="popupMobile" type="file" accept="image/*" className={fileClass} onChange={(event) => previewPopupMobile(event.target.files?.[0])} />
+            </label>
+          </div>
         </div>
       </section>
 

@@ -103,4 +103,6 @@ export const siteSettingsSchema = z.object({
     email: z.string().trim().email("Email chưa hợp lệ"),
     address: z.string().trim().min(5, "Vui lòng nhập địa chỉ"),
     heroSlidesJson: z.string().trim().default("[]"),
+    promoPopupDesktopUrl: z.string().trim().optional().default(""),
+    promoPopupMobileUrl: z.string().trim().optional().default(""),
 });

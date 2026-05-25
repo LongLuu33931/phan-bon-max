@@ -54,7 +54,7 @@ export function HomeWhyChooseSection() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* <div className="grid gap-4 sm:grid-cols-2">
             {strengths.map((item) => (
               <article key={item.title} className="rounded-lg border border-stone-200 bg-stone-50 p-5">
                 <span className="grid size-11 place-items-center rounded-md bg-emerald-800 text-white">
@@ -64,7 +64,7 @@ export function HomeWhyChooseSection() {
                 <p className="mt-3 text-sm leading-6 text-stone-600">{item.text}</p>
               </article>
             ))}
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-8 grid gap-5 rounded-lg border border-emerald-100 bg-emerald-50/70 p-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">

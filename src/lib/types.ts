@@ -67,6 +67,11 @@ export type Post = {
     externalUrl?: string;
 };
 
+export type PromoPopup = {
+    desktopImageUrl: string;
+    mobileImageUrl: string;
+};
+
 export type SiteSettings = {
     hotline: string;
     zaloUrl: string;
@@ -76,6 +81,7 @@ export type SiteSettings = {
     tagline: string;
     logoUrl: string;
     heroSlides: HeroSlide[];
+    promoPopup: PromoPopup;
 };
 
 export type HeroSlide = {

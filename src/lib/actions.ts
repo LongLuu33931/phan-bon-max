@@ -913,8 +913,10 @@ export async function saveSiteSettings(
     }
 
     const logo = formData.get("logo");
-    const { heroSlidesJson, ...settingsData } = parsed.data;
+    const { heroSlidesJson, promoPopupDesktopUrl, promoPopupMobileUrl, ...settingsData } = parsed.data;
     let logoUrl = settingsData.logoUrl || "";
+    let popupDesktopUrl = promoPopupDesktopUrl || "";
+    let popupMobileUrl = promoPopupMobileUrl || "";
     let heroSlides: HeroSlide[];
 
     try {
@@ -983,6 +985,17 @@ export async function saveSiteSettings(
             heroSlides = heroSlides.filter(
                 (slide) => slide.title || slide.imageUrl,
             );
+
+            const popupDesktop = formData.get("popupDesktop");
+            const popupMobile = formData.get("popupMobile");
+
+            if (popupDesktop instanceof File && popupDesktop.size > 0) {
+                popupDesktopUrl = await uploadSiteAssetFile(popupDesktop, "popup");
+            }
+
+            if (popupMobile instanceof File && popupMobile.size > 0) {
+                popupMobileUrl = await uploadSiteAssetFile(popupMobile, "popup");
+            }
         } catch (error) {
             return {
                 ok: false,
@@ -995,7 +1008,7 @@ export async function saveSiteSettings(
 
         const { error } = await supabase!.from("site_settings").upsert({
             key: "site",
-            value: { ...settingsData, logoUrl, heroSlides },
+            value: { ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl } },
             updated_at: new Date().toISOString(),
         });
         if (error) return { ok: false, message: error.message };
@@ -1009,7 +1022,7 @@ export async function saveSiteSettings(
             `insert into public.site_settings (key, value, updated_at)
        values ('site', $1::jsonb, now())
        on conflict (key) do update set value=excluded.value, updated_at=now()`,
-            [JSON.stringify({ ...settingsData, logoUrl, heroSlides })],
+            [JSON.stringify({ ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl } })],
         );
     }
 
