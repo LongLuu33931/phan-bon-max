@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type { PromoPopup } from "@/lib/types";
@@ -28,32 +27,29 @@ export function PromoPopup({ promoPopup }: { promoPopup: PromoPopup }) {
   useEffect(() => {
     if (!promoPopup.desktopImageUrl && !promoPopup.mobileImageUrl) return;
 
-    const imgs: HTMLImageElement[] = [];
-    if (promoPopup.desktopImageUrl) {
-      const img = new window.Image();
-      img.src = promoPopup.desktopImageUrl;
-      imgs.push(img);
-    }
-    if (promoPopup.mobileImageUrl && promoPopup.mobileImageUrl !== promoPopup.desktopImageUrl) {
-      const img = new window.Image();
-      img.src = promoPopup.mobileImageUrl;
-      imgs.push(img);
-    }
+    const urls = [promoPopup.desktopImageUrl, promoPopup.mobileImageUrl]
+      .filter(Boolean) as string[];
+    const uniqueUrls = [...new Set(urls)];
 
     let loadedCount = 0;
-    const total = imgs.length;
-    function onLoad() {
-      loadedCount++;
-      if (loadedCount >= total) setLoaded(true);
-    }
-    imgs.forEach((img) => {
-      img.onload = onLoad;
+    const imgs: HTMLImageElement[] = [];
+
+    uniqueUrls.forEach((url) => {
+      const img = new window.Image();
+      img.src = url;
+      img.onload = img.onerror = () => {
+        loadedCount++;
+        if (loadedCount >= uniqueUrls.length) setLoaded(true);
+      };
+      imgs.push(img);
     });
-    setLoaded(total === 0);
+
+    setLoaded(uniqueUrls.length === 0);
 
     return () => {
       imgs.forEach((img) => {
         img.onload = null;
+        img.onerror = null;
       });
     };
   }, [promoPopup.desktopImageUrl, promoPopup.mobileImageUrl]);
@@ -105,13 +101,11 @@ export function PromoPopup({ promoPopup }: { promoPopup: PromoPopup }) {
         >
           <X size={16} />
         </button>
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={imageUrl}
           alt="Khuyến mãi"
-          width={800}
-          height={600}
           className="max-h-[85vh] w-auto rounded-2xl object-contain shadow-2xl"
-          priority
         />
       </div>
     </div>
