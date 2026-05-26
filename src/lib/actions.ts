@@ -18,12 +18,18 @@ import { createSupabaseAdminClient } from "./supabase-admin";
 import { createSupabaseServerClient } from "./supabase-server";
 import { products } from "./seed-data";
 import { getPostgresPool, postgresConfigured } from "./postgres";
-import type { HeroSlide } from "./types";
+import type { HeroSlide, PromoPopupCta } from "./types";
 
 export type ActionState = {
     ok: boolean;
     message: string;
 };
+
+const promoPopupCtaTypes: PromoPopupCta["type"][] = ["buy", "contact", "call", "zalo"];
+
+function isPromoPopupCtaType(value: string): value is PromoPopupCta["type"] {
+    return promoPopupCtaTypes.includes(value as PromoPopupCta["type"]);
+}
 
 const orderStatusSchema = z.object({
     id: z.string().min(1),
@@ -941,6 +947,25 @@ export async function saveSiteSettings(
         isActive: Boolean(slide.isActive),
     }));
 
+    const ctaIndexes = Array.from(formData.keys())
+        .map((key) => key.match(/^popupCtaType-(\d+)$/)?.[1])
+        .filter((index): index is string => Boolean(index))
+        .map(Number)
+        .sort((a, b) => a - b);
+
+    const popupCtas: PromoPopupCta[] = ctaIndexes
+        .map((index) => {
+            const type = String(formData.get(`popupCtaType-${index}`) ?? "");
+            if (!isPromoPopupCtaType(type)) return null;
+
+            return {
+                enabled: formData.has(`popupCtaEnabled-${index}`),
+                label: String(formData.get(`popupCtaLabel-${index}`) ?? "").trim(),
+                type,
+            };
+        })
+        .filter((cta): cta is PromoPopupCta => Boolean(cta));
+
     if (supabaseConfigured) {
         const adminSupabase = createSupabaseAdminClient();
         const supabase = adminSupabase ?? (await createSupabaseServerClient());
@@ -1008,7 +1033,7 @@ export async function saveSiteSettings(
 
         const { error } = await supabase!.from("site_settings").upsert({
             key: "site",
-            value: { ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl } },
+            value: { ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl, ctas: popupCtas } },
             updated_at: new Date().toISOString(),
         });
         if (error) return { ok: false, message: error.message };
@@ -1022,7 +1047,7 @@ export async function saveSiteSettings(
             `insert into public.site_settings (key, value, updated_at)
        values ('site', $1::jsonb, now())
        on conflict (key) do update set value=excluded.value, updated_at=now()`,
-            [JSON.stringify({ ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl } })],
+            [JSON.stringify({ ...settingsData, logoUrl, heroSlides, promoPopup: { desktopImageUrl: popupDesktopUrl, mobileImageUrl: popupMobileUrl, ctas: popupCtas } })],
         );
     }
 

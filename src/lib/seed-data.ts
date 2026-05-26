@@ -31,6 +31,12 @@ export const siteSettings: SiteSettings = {
     promoPopup: {
         desktopImageUrl: "",
         mobileImageUrl: "",
+        ctas: [
+            { enabled: true, label: "Mua ngay", type: "buy" },
+            { enabled: true, label: "Để lại thông tin", type: "contact" },
+            { enabled: true, label: "Gọi tư vấn", type: "call" },
+            { enabled: true, label: "Nhắn tin Zalo", type: "zalo" },
+        ],
     },
 };
 

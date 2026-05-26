@@ -386,7 +386,7 @@ export async function getSettings() {
         const { rows } = await pool!.query(
             "select value from public.site_settings where key = 'site'",
         );
-        return { ...siteSettings, ...(rows[0]?.value ?? {}) };
+        return { ...siteSettings, ...(rows[0]?.value ?? {}), promoPopup: { ...siteSettings.promoPopup, ...(rows[0]?.value?.promoPopup ?? {}) } };
     }
     if (!supabaseConfigured) return siteSettings;
     noStore();
@@ -399,7 +399,7 @@ export async function getSettings() {
 
     return error || !data?.value
         ? siteSettings
-        : { ...siteSettings, ...(data.value as Partial<typeof siteSettings>) };
+        : { ...siteSettings, ...(data.value as Partial<typeof siteSettings>), promoPopup: { ...siteSettings.promoPopup, ...((data.value as Record<string, unknown>)?.promoPopup as Record<string, unknown> ?? {}) } };
 }
 
 export async function getTestimonials() {

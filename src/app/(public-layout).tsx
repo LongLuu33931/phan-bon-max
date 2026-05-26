@@ -14,7 +14,7 @@ export async function PublicLayout({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <FloatingContactActions />
       <SiteFooter />
-      <PromoPopup promoPopup={settings.promoPopup} />
+      <PromoPopup promoPopup={settings.promoPopup} hotline={settings.hotline} zaloUrl={settings.zaloUrl} />
     </>
   );
 }

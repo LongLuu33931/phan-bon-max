@@ -67,9 +67,16 @@ export type Post = {
     externalUrl?: string;
 };
 
+export type PromoPopupCta = {
+    enabled: boolean;
+    label: string;
+    type: "buy" | "contact" | "call" | "zalo";
+};
+
 export type PromoPopup = {
     desktopImageUrl: string;
     mobileImageUrl: string;
+    ctas: PromoPopupCta[];
 };
 
 export type SiteSettings = {
