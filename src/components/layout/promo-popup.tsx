@@ -66,7 +66,7 @@ export function PromoPopup({
 
     const timer = setTimeout(() => {
       if (!scrollFired) setVisible(true);
-    }, 15000);
+    }, 25000);
 
     return () => {
       window.removeEventListener("show-promo-popup", onScrollTrigger);

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, Sprout } from "lucide-react";
-import { PromoPopupTrigger } from "@/components/layout/promo-popup-trigger";
 import { ProductCard } from "@/components/product/product-card";
 import type { Category, Product } from "@/lib/types";
 
@@ -12,7 +11,6 @@ type FeaturedProductsSectionProps = {
 export function FeaturedProductsSection({ categories, products }: FeaturedProductsSectionProps) {
   return (
     <section className="section py-14">
-      <PromoPopupTrigger />
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside className="h-fit overflow-hidden rounded-lg border border-stone-200 bg-white">
           <p className="bg-emerald-900 px-5 py-4 font-bold uppercase tracking-wide text-white">Danh mục sản phẩm</p>

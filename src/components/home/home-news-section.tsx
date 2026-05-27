@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
+import { PromoPopupTrigger } from "@/components/layout/promo-popup-trigger";
 import type { Post } from "@/lib/types";
 
 function NewsCard({ post }: { post: Post }) {
@@ -71,6 +72,7 @@ export function HomeNewsSection({ posts }: { posts: Post[] }) {
 
     return (
         <section className="section py-14">
+            <PromoPopupTrigger />
             <div className="mb-8 flex items-center justify-between gap-4">
                 <h2 className="text-3xl font-black text-stone-950">Tin tức</h2>
                 <Link
