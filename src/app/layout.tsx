@@ -17,6 +17,29 @@ export const metadata: Metadata = {
   },
   description:
     "Hệ sinh thái phân bón MAX 8000 giúp cải tạo đất, kích rễ, bung đọt, ra hoa, đậu trái và nuôi trái.",
+  openGraph: {
+    title: "MAX 8000 - Phân bón thế hệ mới",
+    description:
+      "Hệ sinh thái phân bón MAX 8000 giúp cải tạo đất, kích rễ, bung đọt, ra hoa, đậu trái và nuôi trái.",
+    url: "https://phanbonmax8000.com",
+    siteName: "MAX 8000",
+    images: [
+      {
+        url: "/images/thumbnail.png",
+        width: 1774,
+        height: 887,
+        alt: "MAX 8000 - Phân bón thế hệ mới",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MAX 8000 - Phân bón thế hệ mới",
+    description:
+      "Hệ sinh thái phân bón MAX 8000 giúp cải tạo đất, kích rễ, bung đọt, ra hoa, đậu trái và nuôi trái.",
+    images: ["/images/thumbnail.png"],
+  },
 };
 
 export default function RootLayout({
