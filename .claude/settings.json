@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(Select-Object -First 30)",
-      "PowerShell(npx tsc --noEmit 2>&1)"
+      "PowerShell(npx tsc --noEmit 2>&1)",
+      "Bash(xxd \"public/images/thumbnail.png\")"
     ]
   }
 }
