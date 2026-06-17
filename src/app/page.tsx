@@ -1,7 +1,6 @@
 import { FeaturedProductsSection } from "@/components/home/featured-products-section";
 import { HeroSlider } from "@/components/home/hero-slider";
 import { HomeContactSection } from "@/components/home/home-contact-section";
-import { HomeFeatureStrip } from "@/components/home/home-feature-strip";
 import { HomeNewsSection } from "@/components/home/home-news-section";
 import { HomePainPointsSection } from "@/components/home/home-pain-points-section";
 import { HomeSolutionSection } from "@/components/home/home-solution-section";
@@ -15,6 +14,15 @@ import {
     getTestimonials,
 } from "@/lib/data";
 import { PublicLayout } from "./(public-layout)";
+
+const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "MAX 8000",
+    url: "https://phanbonmax8000.vn",
+    logo: "https://phanbonmax8000.vn/logo.png",
+    sameAs: ["https://facebook.com/nongnghiepxanhvn2026"],
+};
 
 export default async function Home() {
     const [products, categories, posts, settings, testimonials] =
@@ -35,6 +43,15 @@ export default async function Home() {
 
     return (
         <PublicLayout>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(organizationJsonLd).replace(
+                        /</g,
+                        "\\u003c",
+                    ),
+                }}
+            />
             <HeroSlider
                 slides={settings.heroSlides ?? []}
                 fallbackProduct={heroProduct}
