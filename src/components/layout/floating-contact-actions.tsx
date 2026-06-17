@@ -34,9 +34,9 @@ export async function FloatingContactActions() {
         rel="noopener"
         aria-label="Mở Facebook MAX 8000"
         title="Facebook MAX 8000"
-        className="flex size-14 items-center justify-center rounded-full bg-[#1877f2] shadow-lg shadow-emerald-950/25 transition hover:-translate-y-0.5 hover:bg-[#0f6be8] hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+        className="flex size-14 items-center justify-center rounded-full border border-blue-100 bg-white shadow-lg shadow-emerald-950/25 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
       >
-        <Image src="/facebook-icon.svg" alt="" width={32} height={32} className="size-8 shrink-0" />
+        <Image src="/facebook-icon.svg" alt="" width={32} height={32} className="contact-bounce size-8 shrink-0" />
       </a>
 
       {phoneHref ? (
